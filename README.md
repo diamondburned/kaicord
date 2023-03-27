@@ -2,7 +2,7 @@
 
 <div align="center">
   <p>Minimal Discord client for KaiOS 3.x.</p>
-  <img src=".github/PXL_20230327_1728118533_small.jpg" />
+  <img src=".github/PXL_20230327_1728118533_small.jpg" width="400" />
 </div>
 
 <br>
