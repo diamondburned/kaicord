@@ -1,0 +1,5 @@
+# Allow KaiOS to fetch the manifest
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"

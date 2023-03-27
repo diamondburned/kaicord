@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>{{ manifest.name }}</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="{{ manifest.description }}" />
+    <meta name="theme-color" content="{{ manifest.theme_color }}" />
+    <link rel="icon" href="{{ manifest.icons.slice(-1)[0].src }}" />
+    <link
+      rel="mask-icon"
+      href="{{ manifest.icons.slice(-1)[0].src }}"
+      color="{{ manifest.theme_color }}"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="{{ manifest.icons.slice(-1)[0].src }}"
+      sizes="144x144"
+    />
+  </head>
+  <body></body>
+  <script type="module" src="/main.ts"></script>
+</html>
