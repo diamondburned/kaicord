@@ -1,6 +1,15 @@
 # Kaicord
 
-Minimal Discord client for KaiOS 3.x.
+<div align="center">
+  <p>Minimal Discord client for KaiOS 3.x.</p>
+  <img src=".github/PXL_20230327_1728118533_small.jpg" />
+</div>
+
+<br>
+
+Kaicord is currently a work-in-progress. Many essential features will be
+missing. Kaicord will also try to be distraction-free and minimal, and so it
+won't have many of the features that Discord has.
 
 ## Credits
 
