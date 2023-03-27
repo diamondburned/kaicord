@@ -120,9 +120,20 @@ export class KaiOSClient implements HTTPWSClient {
     });
   }
 
-  websocket(url: string): WebSocket {
-    // Apparently this just works.
-    return new WebSocket(url);
+  websocket(urlstr: string): WebSocket {
+    const url = new URL(urlstr);
+    switch (url.host) {
+      case "remote-auth-gateway.discord.gg":
+        // You're welcome :)
+        // Traffic moved over the gateway is encrypted by a locally-generated
+        // public/private keypair, so the proxy wouldn't see any of it.
+        return new WebSocket(`wss://discord-remote-auth.libdb.so${url.pathname}${url.search}`);
+      case "gateway.discord.gg":
+      default:
+        // The regular gateway is not as heavily guarded by Cloudflare as the
+        // remote auth gateway, so we can use it directly.
+        return new WebSocket(url);
+    }
   }
 }
 
