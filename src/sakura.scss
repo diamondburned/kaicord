@@ -28,6 +28,7 @@ $font-family-heading: $font-family-base;
 
 html,
 body {
+  min-height: calc(100%);
   height: calc(100%);
   max-width: none;
 }
@@ -35,6 +36,7 @@ body {
 body {
   margin: 0;
   padding: 0;
+  position: relative;
 }
 
 section {

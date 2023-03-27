@@ -10,7 +10,6 @@
 <script lang="ts">
   import * as svelte from "svelte";
   import * as local from "#/lib/local.js";
-  import { fly } from "svelte/transition";
 
   const dispatch = svelte.createEventDispatcher<{ done: Result }>();
 
@@ -57,9 +56,18 @@
   });
 </script>
 
-<dialog id="qr-login" open transition:fly={{ duration: 100 }}>
+<dialog id="qr-login" open={true}>
   <header>
-    <h4>QR code</h4>
+    <h4>
+      QR code
+      {#if $qr && $qr.ready}
+        <small>
+          <time datetime={$qr.until.toISOString()}>
+            ({countdown})
+          </time>
+        </small>
+      {/if}
+    </h4>
     <button type="button" class="close" on:click={() => dispatch("done", { type: "close" })}>
       <span class="material-symbols-rounded">close</span>
     </button>
@@ -76,9 +84,7 @@
             <br />
             Please confirm on your phone.
           {:else}
-            <time datetime={$qr.until.toISOString()}>
-              Valid until {countdown}
-            </time>
+            Waiting to be scanned...
           {/if}
         </p>
       {:else}
@@ -95,20 +101,22 @@
 </dialog>
 
 <style>
-  #qr-login[open] {
+  /* It was a mistake to use dialog for this. */
+  #qr-login {
     width: 100%;
     height: 100%;
     border: none;
     padding: 0;
     background-color: var(--color-bg);
+    color: var(--color-text);
     display: flex;
+    position: absolute;
     flex-direction: column;
     z-index: 1;
   }
 
-  main,
-  header h4 {
-    padding: 0 1em;
+  main {
+    padding: 0;
   }
 
   header {
@@ -117,20 +125,32 @@
     justify-content: space-between;
   }
 
+  header h4 {
+    margin: 0.35em 0;
+    padding: 0 0.5em;
+    font-size: 1.25em;
+  }
+
+  header h4 small {
+    font-weight: normal;
+  }
+
   header button.close {
     padding: 0;
     align-self: flex-start;
-    aspect-ratio: 1/1;
+    width: 2em;
+    height: 2em;
+    margin: 0.25em;
   }
 
   header button.close span.material-symbols-rounded {
     margin: 0;
     font-size: 28px;
+    vertical-align: middle;
   }
 
   main {
     flex: 1;
-
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -152,10 +172,10 @@
 
   main img.qr {
     width: 100%;
+    max-width: 400px;
     height: auto;
-    margin: 0;
+    margin: 0 auto;
     max-height: 100%;
-    outline: 2px solid var(--color-blossom);
     border-radius: 4px;
   }
 </style>
