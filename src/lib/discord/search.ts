@@ -5,7 +5,7 @@ import * as discord from "#/lib/discord/discord.js";
 
 export class ChannelSearcher {
   constructor(
-    public readonly state: store.Writable<state.StateData>,
+    public readonly state: store.Writable<discord.State>,
     // threshold is the minimum score a fuzzy match must have to be included in
     // the results.
     public readonly threshold = 0.05,
@@ -85,7 +85,8 @@ export class ChannelSearcher {
       switch (channel.type) {
         case discord.ChannelType.DirectMessage:
         case discord.ChannelType.GroupDM:
-          name += " " + channel.recipients.map((u) => u.username).join(" ");
+          const recipients = store.get(channel.recipients);
+          name += " " + recipients.map((u) => u.username).join(" ");
       }
 
       const match = fuzzy.match(input, name);

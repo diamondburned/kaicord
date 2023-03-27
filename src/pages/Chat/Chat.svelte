@@ -209,6 +209,7 @@
   #chat > :global(header) {
     height: clamp(2.5em, 10vh, 3em);
     border-bottom: 1px solid var(--color-bg-alt);
+    box-sizing: border-box;
     position: relative;
   }
 

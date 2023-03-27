@@ -110,6 +110,10 @@
     opacity: 0.85;
   }
 
+  .body {
+    margin-right: 0.5em;
+  }
+
   .body p {
     margin: 0;
     line-height: 1.35em;

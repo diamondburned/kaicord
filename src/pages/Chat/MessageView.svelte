@@ -93,7 +93,7 @@
 
 <style>
   header + * {
-    height: 100%;
+    flex: 1;
     box-shadow: 0 22px 16px -30px inset rgba(0, 0, 0, 0.85);
   }
 
@@ -156,6 +156,8 @@
     display: flex;
     flex-direction: column-reverse;
     overflow: auto;
+    max-width: 800px;
+    margin: auto;
   }
 
   @media (max-width: 250px) {

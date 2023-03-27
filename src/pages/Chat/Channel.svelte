@@ -24,14 +24,16 @@
   //
   // This is dogshit! It's fucking awful! How could anyone have missed these?
   // What the fuck? At least give me something that fucking works.
-  switch (channel.type) {
-    case discord.ChannelType.DirectMessage:
-    case discord.ChannelType.GroupDM:
-      recipients = channel.recipients;
-      break;
-    default:
-      guild = channel.guild;
-      break;
+  $: {
+    switch (channel.type) {
+      case discord.ChannelType.DirectMessage:
+      case discord.ChannelType.GroupDM:
+        recipients = channel.recipients;
+        break;
+      default:
+        guild = channel.guild;
+        break;
+    }
   }
 </script>
 
