@@ -2,6 +2,7 @@ import * as store from "svelte/store";
 import * as api from "#/lib/discord/api.js";
 import * as discord from "#/lib/discord/discord.js";
 import * as persistent from "#/lib/persistent.js";
+import { sleep } from "#/lib/promise.js";
 
 type SessionData = {
   token: string;
@@ -338,8 +339,4 @@ export class Session {
       });
     });
   }
-}
-
-async function sleep(ms: number) {
-  return new Promise((ok) => setTimeout(ok, ms));
 }

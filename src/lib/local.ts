@@ -21,11 +21,12 @@ export const connected = store.writable(false);
 // session is the singleton state instance.
 export const session = store.writable<state.State>();
 
+export const client = api.Client.default();
+
 // open opens a connection to the Discord gateway. It does nothing if a
 // connection is already open.
 export async function open(token?: string): Promise<void> {
-  const c = api.Client.default();
-  const s = new state.State(c);
+  const s = new state.State(client);
 
   const ok = await s.open(token);
   if (!ok) {

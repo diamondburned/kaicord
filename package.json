@@ -7,6 +7,7 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@originjs/crypto-js-wasm": "^1.1.0",
     "@sindresorhus/fnv1a": "^3.0.0",
     "@sveltejs/vite-plugin-svelte": "^2.0.2",
     "@tsconfig/svelte": "^3.0.0",
@@ -17,6 +18,7 @@
     "prettier": "^2.8.4",
     "prettier-plugin-svelte": "^2.8.1",
     "qr-scanner": "^1.4.2",
+    "qrcode-generator": "^1.4.4",
     "sakura.css": "^1.4.1",
     "svelte": "^3.55.1",
     "svelte-check": "^3.0.3",

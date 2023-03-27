@@ -1,8 +1,6 @@
 import * as discord from "#/lib/discord/discord.js";
 import * as gateway from "#/lib/discord/gateway.js";
 
-export const Endpoint = "https://discord.com/api/v9";
-
 export type Channel = {
   id: string;
   type: discord.ChannelType;
@@ -70,29 +68,6 @@ export type Member = {
   roles: string[];
   avatar?: string;
 };
-
-export type FetchMessage = {
-  request: {
-    readonly method: "GET";
-    readonly path: `/channels/${discord.ID}/messages`;
-    limit?: number;
-    around?: discord.ID;
-    before?: discord.ID;
-    after?: discord.ID;
-  };
-  response: Message[];
-};
-
-export type Method = "GET" | "POST" | "PATCH" | "DELETE";
-
-export interface Action {
-  request: {
-    readonly method: Method;
-    readonly path: string;
-    [key: string]: unknown;
-  };
-  response: unknown;
-}
 
 // FetchRequest is the request type used for Fetch.
 export type HTTPFetchRequest = {
@@ -184,14 +159,58 @@ export class ViteClient implements HTTPWSClient {
   }
 
   websocket(urlstr: string): WebSocket {
-    const url = new URL(urlstr);
-    if (url.host === "gateway.discord.gg") {
-      urlstr = `ws://${location.host}/__gateway__${url.pathname}${url.search}`;
+    const proxy = (part: string) => {
+      const urlstr = `ws://${location.host}/${part}${url.pathname}${url.search}`;
       console.debug(`ViteClient: proxying websocket ${urlstr}`);
       return new WebSocket(urlstr);
+    };
+
+    const url = new URL(urlstr);
+    switch (url.host) {
+      case "gateway.discord.gg":
+        return proxy("__gateway__");
+      case "remote-auth-gateway.discord.gg":
+        return proxy("__auth_gateway__");
+      default:
+        return new WebSocket(url);
     }
-    return new WebSocket(url);
   }
+}
+
+export const Endpoint = "https://discord.com/api/v9";
+
+export type FetchMessage = {
+  request: {
+    readonly method: "GET";
+    readonly path: `/channels/${discord.ID}/messages`;
+    limit?: number;
+    around?: discord.ID;
+    before?: discord.ID;
+    after?: discord.ID;
+  };
+  response: Message[];
+};
+
+export type RemoteAuthLogin = {
+  request: {
+    readonly method: "POST";
+    readonly path: "/users/@me/remote-auth/login";
+    ticket: string;
+  };
+  response: {
+    encrypted_token: string;
+  };
+};
+
+export type Method = "GET" | "POST" | "PATCH" | "DELETE";
+
+export interface Action {
+  request: {
+    readonly method: Method;
+    readonly path: string;
+    [key: string]: unknown;
+  };
+  response: unknown;
 }
 
 export class Client {
