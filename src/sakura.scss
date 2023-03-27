@@ -28,8 +28,8 @@ $font-family-heading: $font-family-base;
 
 html,
 body {
-  min-height: calc(100%);
   height: calc(100%);
+  min-height: calc(100%);
   max-width: none;
 }
 

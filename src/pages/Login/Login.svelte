@@ -46,37 +46,37 @@
 
 {#if qr}
   <QRLogin on:done={onQRDone} />
-{/if}
-
-{#await promise}
-  <div class="loading">
-    <Loading size={46} />
-  </div>
-{:then}
-  <main id="login" class="container">
-    <h1>
-      Login
-      <br />
-      <small>to Discord</small>
-    </h1>
-    {#if error}
-      <p class="error">{error}</p>
-    {/if}
-    <form on:submit|preventDefault={login}>
-      <formset>
-        <input type="text" placeholder="Token" bind:value={token} />
+{:else}
+  {#await promise}
+    <div class="loading">
+      <Loading size={46} />
+    </div>
+  {:then}
+    <main id="login" class="container">
+      <h1>
+        Login
+        <br />
+        <small>to Discord</small>
+      </h1>
+      {#if error}
+        <p class="error">{error}</p>
+      {/if}
+      <form on:submit|preventDefault={login}>
         <formset>
-          <button type="submit" disabled={!token}>Login</button>
+          <input type="text" placeholder="Token" bind:value={token} />
+          <formset>
+            <button type="submit" disabled={!token}>Login</button>
+          </formset>
+          <TextualHRule text="or" />
+          <button type="button" disabled={!!token} on:click={() => (qr = true)}>
+            <span class="material-symbols-rounded">qr_code_scanner</span>
+            Login with QR
+          </button>
         </formset>
-        <TextualHRule text="or" />
-        <button type="button" disabled={!!token} on:click={() => (qr = true)}>
-          <span class="material-symbols-rounded">qr_code_scanner</span>
-          Login with QR
-        </button>
-      </formset>
-    </form>
-  </main>
-{/await}
+      </form>
+    </main>
+  {/await}
+{/if}
 
 <style>
   main,
