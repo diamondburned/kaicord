@@ -10,6 +10,7 @@
   export let mentions = 0;
 
   const dispatch = svelte.createEventDispatcher<{ select: discord.Channel }>();
+  const iconSize = "2em";
 
   // svelte moment
   let guild: store.Readable<discord.Guild>;
@@ -35,6 +36,45 @@
         break;
     }
   }
+
+  function channelIsThread(channel: discord.Channel): boolean {
+    switch (channel.type) {
+      case discord.ChannelType.GuildPublicThread:
+      case discord.ChannelType.GuildPrivateThread:
+      case discord.ChannelType.GuildNewsThread:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  function channelIcon(channel: discord.Channel): string {
+    switch (channel.type) {
+      case discord.ChannelType.DirectMessage:
+        return "person";
+      case discord.ChannelType.GroupDM:
+        return "group";
+      case discord.ChannelType.GuildText:
+      case discord.ChannelType.GuildPublicThread:
+      case discord.ChannelType.GuildPrivateThread:
+        return "tag";
+      case discord.ChannelType.GuildCategory:
+      case discord.ChannelType.GuildDirectory:
+        return "folder";
+      case discord.ChannelType.GuildVoice:
+      case discord.ChannelType.GuildStageVoice:
+        return "mic";
+      case discord.ChannelType.GuildNews:
+      case discord.ChannelType.GuildNewsThread:
+        return "newspaper";
+      case discord.ChannelType.GuildStore:
+        return "shopping_cart";
+      case discord.ChannelType.GuildForum:
+        return "question_answer";
+      default:
+        return "help";
+    }
+  }
 </script>
 
 <button
@@ -45,17 +85,31 @@
   on:click={() => dispatch("select", channel)}
 >
   {#if channel.type == discord.ChannelType.DirectMessage}
-    <Icon url={discord.userAvatar($recipients[0])} name={$recipients[0].username} avatar={true} />
+    <Icon
+      url={discord.userAvatar($recipients[0])}
+      size={iconSize}
+      name={$recipients[0].username}
+      symbol={channelIcon(channel)}
+      avatar={true}
+    />
     <p class="name">{discord.channelName(channel)}</p>
   {:else if channel.type == discord.ChannelType.GroupDM}
-    <Icon symbol="group" name={discord.channelName(channel)} />
+    <Icon symbol={channelIcon(channel)} size={iconSize} name={discord.channelName(channel)} />
     <p class="name">{discord.channelName(channel)}</p>
   {:else}
-    <Icon url={discord.guildIcon($guild, false)} name={$guild.name} />
+    <div class="guild-icon">
+      <Icon symbol={channelIcon(channel)} size={iconSize} name={discord.channelName(channel)} />
+      {#if channelIsThread(channel)}
+        <Icon symbol="mode_comment" name="thread" />
+      {/if}
+    </div>
     <p class="name">
-      {discord.channelName(channel)}
+      {discord.channelName(channel, false)}
       <br />
-      <small>{$guild.name}</small>
+      <small>
+        <Icon url={discord.guildIcon($guild, false)} name={$guild.name} inline={true} />
+        {$guild.name}
+      </small>
     </p>
   {/if}
   <aside>
@@ -90,9 +144,16 @@
     background: var(--color-bg);
   }
 
+  .name small {
+    font-size: 0.85em;
+  }
+
+  aside:empty {
+    display: none;
+  }
+
   .channel .name {
     margin: 0;
-    margin-right: 0.25em;
     font-size: 0.9em;
     line-height: 1.15em;
     overflow: hidden;

@@ -170,7 +170,7 @@ export function userAvatar(user: User): string {
   return `https://cdn.discordapp.com/embed/avatars/${picNo}.png`;
 }
 
-export function channelName(channel: Channel): string {
+export function channelName(channel: Channel, hash = true): string {
   switch (channel.type) {
     case ChannelType.DirectMessage:
     case ChannelType.GroupDM:
@@ -191,10 +191,10 @@ export function channelName(channel: Channel): string {
       return "Unknown DM";
 
     case ChannelType.GuildCategory:
-      return ">" + channel.name ?? "";
+      return (hash ? ">" : "") + channel.name ?? "";
 
     default:
-      return "#" + channel.name ?? "";
+      return (hash ? "#" : "") + channel.name ?? "";
   }
 }
 

@@ -41,8 +41,6 @@
     }
   }
 
-  $: console.log("messages", $messages);
-
   function shouldBeCompact(messages: discord.Message[], current: number): boolean {
     const compactAge = 1000 * 60 * 5; // 5 minutes
     const curr = messages[current];

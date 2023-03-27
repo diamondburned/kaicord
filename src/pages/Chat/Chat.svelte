@@ -166,11 +166,14 @@
   #search {
     display: grid;
     grid-template-rows: auto 1fr;
+    /* Hack that makes ellipsizing work.
+	   See https://css-tricks.com/preventing-a-grid-blowout/. */
+    grid-template-columns: minmax(0, 1fr);
   }
 
   #search input {
     width: calc(100%);
-    height: clamp(2.5em, 10vh, 3em);
+    height: clamp(2em, 10vh, 3em);
     margin: 0;
     background-color: transparent;
     border: none;
@@ -180,7 +183,7 @@
   }
 
   /* ChannelList */
-  #search > *:not(input) {
+  #search > :global(*:not(input)) {
     overflow: auto;
   }
 

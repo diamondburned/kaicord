@@ -7,6 +7,7 @@
 
   export let url = "";
   export let symbol = "";
+  export let size = inline ? "1.5em" : "2.25em";
 
   $: alt = avatar ? `${name} avatar` : `${name} icon`;
 
@@ -20,30 +21,27 @@
 </script>
 
 {#if url}
-  <img class="icon" class:inline src={url} {alt} />
+  <img class="icon" class:inline src={url} {alt} style="--size: {size}" />
 {:else if symbol}
-  <div class="icon" aria-label={alt}>
+  <div class="icon" aria-label={alt} style="--size: {size}">
     <Symbol name={symbol} />
   </div>
 {:else}
-  <div class="icon" class:inline aria-label={alt}>
+  <div class="icon" class:inline aria-label={alt} style="--size: {size}">
     <p>{initials(name)}</p>
   </div>
 {/if}
 
 <style>
   .icon {
-    width: 2.25em;
-    height: 2.25em;
+    width: var(--size);
+    height: var(--size);
     margin: 0;
     aspect-ratio: 1/1;
     border-radius: 100px;
   }
 
   .icon.inline {
-    width: 1.5em;
-    height: 1.5em;
-    margin-bottom: -0.1em;
     vertical-align: top;
   }
 

@@ -6,7 +6,7 @@
   export let compact: boolean = false;
 
   // Workaround for Svelte limitation.
-  const author = message.author;
+  $: author = message.author;
   $: roles = $author.member ? $author.member.roles : null;
   $: color = roles && $roles ? rolesColor($roles) : 0;
 
