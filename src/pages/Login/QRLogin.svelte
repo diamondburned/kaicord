@@ -11,6 +11,8 @@
   import * as svelte from "svelte";
   import * as local from "#/lib/local.js";
 
+  import Loading from "#/components/Loading.svelte";
+
   const dispatch = svelte.createEventDispatcher<{ done: Result }>();
 
   let qr: remoteauth.Client["qr"];
@@ -56,9 +58,9 @@
   });
 </script>
 
-<dialog id="qr-login" open={true}>
+<div id="qr-login" role="dialog" aria-labelledby="qr-title">
   <header>
-    <h4>
+    <h4 id="qr-title">
       QR code
       {#if $qr && $qr.ready}
         <small>
@@ -88,17 +90,21 @@
           {/if}
         </p>
       {:else}
-        <p class="error">
-          {$qr.error}
-          <br />
+        <Loading size={32} />
+        <p class:error={$qr.error}>
+          {#if $qr.error}
+            Error: {$qr.error}
+            <br />
+          {/if}
           Retrying...
         </p>
       {/if}
     {:else}
+      <Loading size={32} />
       <p class="loading">Loading...</p>
     {/if}
   </main>
-</dialog>
+</div>
 
 <style>
   /* It was a mistake to use dialog for this. */
@@ -113,10 +119,6 @@
     position: absolute;
     flex-direction: column;
     z-index: 1;
-  }
-
-  main {
-    padding: 0;
   }
 
   header {
@@ -151,9 +153,11 @@
 
   main {
     flex: 1;
+    padding: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
   }
 
   p.error {
