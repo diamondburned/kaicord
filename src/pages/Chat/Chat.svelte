@@ -226,6 +226,8 @@
   }
 
   nav > label {
+    padding: 0; /* KaiOS */
+    color: var(--color-text); /* KaiOS */
     margin-bottom: 0;
     display: flex;
     align-items: center;
@@ -233,6 +235,12 @@
     transition: background-color 75ms ease;
     border-bottom: 2px solid transparent;
     border-top: 2px solid transparent;
+  }
+
+  /* KaiOS-specific */
+  nav > label::before,
+  nav > label::after {
+    display: none;
   }
 
   nav > input:checked + label {

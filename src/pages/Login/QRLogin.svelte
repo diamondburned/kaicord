@@ -80,7 +80,6 @@
         <img class="qr" src={$qr.image} alt="QR code" />
         <p class="qr-info">
           {#if $qr.user}
-            <br />
             Logging in as
             <span class="username">{$qr.user.username}#{$qr.user.discriminator}</span>.
             <br />
