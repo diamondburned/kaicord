@@ -25,14 +25,32 @@ function unwrap<T>(v: T | null | undefined): T {
   return v!;
 }
 
-function convertUser(user: api.User): discord.User {
+export function convertUser(user: api.User): discord.Friend {
   return {
     ...user,
     bot: !!user.bot,
   };
 }
 
-function convertGuildChannel(
+export function convertMember(
+  state: StateStore,
+  guildID: discord.ID,
+  member: api.Member
+): discord.Member {
+  return {
+    ...convertUser(member.user),
+    guild: store.derived(state, (state) => unwrap(state.guilds.get(guildID))),
+    roles: store.derived(state, (state) => {
+      const knownRoles = unwrap(state.guilds.get(guildID)).roles;
+      const roles = member.roles
+        .map((roleID) => unwrap(knownRoles.find((known) => known.id == roleID)))
+        .filter((role) => role);
+      return roles;
+    }),
+  };
+}
+
+export function convertGuildChannel(
   state: StateStore,
   channel: api.Channel,
   guildID: string
@@ -57,7 +75,10 @@ function convertGuildChannel(
   }
 }
 
-function convertPrivateChannel(state: StateStore, channel: api.Channel): discord.Channel | null {
+export function convertPrivateChannel(
+  state: StateStore,
+  channel: api.Channel
+): discord.Channel | null {
   let recipientIDs = channel.recipient_ids;
   if (!recipientIDs && channel.recipients) {
     recipientIDs = channel.recipients.map((user) => user.id);
@@ -86,34 +107,13 @@ function convertPrivateChannel(state: StateStore, channel: api.Channel): discord
   }
 }
 
-function convertChannelMessage(state: StateStore, message: api.Message): discord.Message {
-  const channel = unwrap(stateChannel(store.get(state), message.channel_id));
-  let guildID: string | null = null;
-  switch (channel.type) {
-    case discord.ChannelType.DirectMessage:
-    case discord.ChannelType.GroupDM:
-      break;
-    default:
-      guildID = store.get(channel.guild).id;
-  }
-
-  return {
-    ...message,
-    author: store.derived(state, (state) => {
-      let member: discord.GuildMember | undefined;
-      if (guildID) {
-        const guild = unwrap(state.guilds.get(unwrap(guildID)));
-        member = guild.members.get(message.author.id);
-      }
-      return {
-        ...convertUser(message.author),
-        member,
-      };
-    }),
+export function convertChannelMessage(state: StateStore, message: api.Message): discord.Message {
+  const stateStore = state;
+  const v = {
+    id: message.id,
+    type: message.type,
+    content: message.content,
     channel: store.derived(state, (state) => unwrap(stateChannel(state, message.channel_id))),
-    guild: message.guild_id
-      ? store.derived(state, (state) => unwrap(state.guilds.get(message.guild_id!)))
-      : undefined,
     timestamp: new Date(Date.parse(message.timestamp)),
     editedTimestamp: message.edited_timestamp
       ? new Date(Date.parse(message.edited_timestamp))
@@ -134,6 +134,44 @@ function convertChannelMessage(state: StateStore, message: api.Message): discord
         }
       : undefined,
   };
+
+  const channel = unwrap(stateChannel(store.get(state), message.channel_id));
+  switch (channel.type) {
+    case discord.ChannelType.DirectMessage:
+    case discord.ChannelType.GroupDM: {
+      return {
+        ...v,
+        guild: undefined,
+        author: store.derived(state, (state) => {
+          const user = state.friends.get(message.author.id);
+          if (user) {
+            return user;
+          }
+          return convertUser(message.author);
+        }),
+      };
+    }
+    default: {
+      const guildID = store.get(channel.guild).id;
+      return {
+        ...v,
+        guild: store.derived(state, (state) => unwrap(state.guilds.get(message.guild_id!))),
+        author: store.derived(state, (state) => {
+          const guild = unwrap(state.guilds.get(unwrap(guildID)));
+          const member = guild.members.get(message.author.id);
+          if (member) {
+            return member;
+          }
+
+          return {
+            ...convertUser(message.author),
+            guild: store.derived(stateStore, (state) => unwrap(state.guilds.get(guildID))),
+            roles: store.readable(undefined),
+          };
+        }),
+      };
+    }
+  }
 }
 
 function convertGuildCreate(state: StateStore, guild: gateway.GuildCreateData): discord.Guild {
@@ -147,17 +185,7 @@ function convertGuildCreate(state: StateStore, guild: gateway.GuildCreateData): 
   };
 
   for (const member of guild.members ?? []) {
-    g.members.set(member.user.id, {
-      ...convertUser(member.user),
-      guild: store.derived(state, (state) => unwrap(state.guilds.get(guild.id))),
-      roles: store.derived(state, (state) => {
-        const knownRoles = unwrap(state.guilds.get(guild.id)).roles;
-        const roles = member.roles
-          .map((roleID) => unwrap(knownRoles.find((known) => known.id == roleID)))
-          .filter((role) => role);
-        return roles;
-      }),
-    });
+    g.members.set(member.user.id, convertMember(state, g.id, member));
   }
 
   for (const channel of guild.channels ?? []) {
@@ -170,9 +198,10 @@ function convertGuildCreate(state: StateStore, guild: gateway.GuildCreateData): 
   return g;
 }
 
-export class State extends gateway.Session implements store.Readable<discord.State> {
+export class State extends gateway.Session implements StateStore {
   public readonly state = store.writable(State.reset());
   public readonly chMessages = new Map<discord.ID, store.Writable<discord.Message[]>>();
+  public readonly self = store.writable<discord.Friend>();
 
   constructor(
     public readonly client: api.Client,
@@ -209,6 +238,22 @@ export class State extends gateway.Session implements store.Readable<discord.Sta
     return stateChannel(store.get(this.state), id);
   }
 
+  // user gets the user with the given ID. If no user ID is given, the current
+  // user is returned.
+  user(
+    guildID: discord.ID | null,
+    userID = store.get(this.selfID)
+  ): store.Readable<discord.User | null> {
+    return store.derived(this.state, (state) => {
+      if (guildID) {
+        const guild = unwrap(state.guilds.get(unwrap(guildID)));
+        return guild.members.get(userID) ?? null;
+      } else {
+        return state.friends.get(userID) ?? null;
+      }
+    });
+  }
+
   async messages(id: discord.ID): Promise<store.Writable<discord.Message[]>> {
     let list = this.chMessages.get(id);
     if (list) return list;
@@ -236,6 +281,7 @@ export class State extends gateway.Session implements store.Readable<discord.Sta
   private updateState(state: discord.State, ev: gateway.DispatchEvent): discord.State {
     switch (ev.t) {
       case "READY": {
+        this.self.set(convertUser(ev.d.user));
         state = State.reset();
 
         for (const friend of ev.d.users) {
@@ -342,10 +388,27 @@ export class State extends gateway.Session implements store.Readable<discord.Sta
         messages.update((messages) => {
           switch (ev.t) {
             case "MESSAGE_CREATE": {
+              if (ev.d.guild_id && ev.d.member) {
+                // Load this member into our state.
+                const guild = state.guilds.get(ev.d.guild_id);
+                if (guild) {
+                  // Discord is lazy and doesn't attach the user field in the
+                  // member object. We'll add it ourselves.
+                  guild.members.set(
+                    ev.d.author.id,
+                    convertMember(this.state, guild.id, {
+                      ...ev.d.member,
+                      user: ev.d.author,
+                    })
+                  );
+                }
+              }
+
               messages.unshift(convertChannelMessage(this.state, ev.d));
               if (messages.length > this.opts.messageLimit) {
                 messages.pop();
               }
+
               break;
             }
 
@@ -354,6 +417,7 @@ export class State extends gateway.Session implements store.Readable<discord.Sta
               if (message) {
                 Object.assign(message, convertChannelMessage(this.state, ev.d));
               }
+
               break;
             }
 
@@ -362,6 +426,7 @@ export class State extends gateway.Session implements store.Readable<discord.Sta
               if (message) {
                 messages.splice(messages.indexOf(message), 1);
               }
+
               break;
             }
           }

@@ -1,14 +1,30 @@
+<script lang="ts" context="module">
+  import * as discord from "#/lib/discord/discord.js";
+  import * as store from "svelte/store";
+
+  export type SendingMessage = { readonly sending: true } & {
+    author: store.Readable<discord.User>;
+    content: string;
+    timestamp: Date;
+    error?: any;
+  };
+
+  export type RegularMessage = { readonly sending?: undefined } & discord.Message;
+
+  export type Message = SendingMessage | RegularMessage;
+</script>
+
 <script lang="ts">
   import Icon from "#/components/Icon.svelte";
 
-  import * as discord from "#/lib/discord/discord.js";
-  export let message: discord.Message;
+  export let message: Message;
   export let compact: boolean = false;
 
   // Workaround for Svelte limitation.
   $: author = message.author;
-  $: roles = $author.member ? $author.member.roles : null;
+  $: roles = $author.guild ? $author.roles : null;
   $: color = roles && $roles ? rolesColor($roles) : 0;
+  $: id = message.sending ? undefined : message.id;
 
   function rolesColor(roles: discord.GuildRole[]): string {
     roles.sort((a, b) => b.position - a.position);
@@ -17,7 +33,13 @@
   }
 </script>
 
-<section tabindex="-1" class="message" id="message-{message.id}" class:compact>
+<section
+  {id}
+  tabindex="-1"
+  class="message"
+  class:compact
+  class:sending={message.sending && !message.error}
+>
   {#if !compact}
     <aside>
       <Icon url={discord.userAvatar($author)} name={$author.username} avatar={true} />
@@ -39,13 +61,18 @@
     </p>
   {/if}
   <div class="body">
-    {#if message.content}
-      <p class="text">{message.content}</p>
-    {:else}
-      <p class="info">No content</p>
-    {/if}
-    {#if message.editedTimestamp}
-      <time class="edited" datetime={message.editedTimestamp.toISOString()}> (edited) </time>
+    <p class="text">
+      {#if message.content}
+        {message.content}
+      {:else}
+        <span class="info">No content</span>
+      {/if}
+      {#if !message.sending && message.editedTimestamp}
+        <time class="edited" datetime={message.editedTimestamp.toISOString()}> (edited) </time>
+      {/if}
+    </p>
+    {#if message.sending && message.error}
+      <p class="error">{message.error}</p>
     {/if}
   </div>
 </section>
@@ -67,6 +94,10 @@
   }
   .message > .body {
     grid-area: 2/ 2/ 3/ 3;
+  }
+
+  .message.sending {
+    opacity: 0.45;
   }
 
   .message > aside {
@@ -122,10 +153,19 @@
     word-break: break-word;
   }
 
-  .info {
-    font-style: italic;
+  .info,
+  .edited {
     font-size: 0.85em;
     opacity: 0.85;
+  }
+
+  .info {
+    font-style: italic;
+  }
+
+  .error {
+    font-size: 0.85em;
+    color: var(--color-error);
   }
 
   @media (max-width: 250px) {

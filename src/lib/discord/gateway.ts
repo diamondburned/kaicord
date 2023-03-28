@@ -90,8 +90,8 @@ export type DispatchEvent = {
   | { readonly t: "CHANNEL_CREATE"; d: api.Channel }
   | { readonly t: "CHANNEL_UPDATE"; d: { id: string } & Partial<api.Channel> }
   | { readonly t: "CHANNEL_DELETE"; d: { id: string } & Partial<api.Channel> }
-  | { readonly t: "MESSAGE_CREATE"; d: api.Message & { member: api.Member } }
-  | { readonly t: "MESSAGE_UPDATE"; d: api.Message & { member: api.Member } }
+  | { readonly t: "MESSAGE_CREATE"; d: api.Message & { member?: Omit<api.Member, "user"> } }
+  | { readonly t: "MESSAGE_UPDATE"; d: api.Message & { member?: Omit<api.Member, "user"> } }
   | { readonly t: "MESSAGE_DELETE"; d: { id: string; channel_id: string } }
 );
 

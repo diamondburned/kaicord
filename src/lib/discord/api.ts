@@ -1,6 +1,86 @@
 import * as discord from "#/lib/discord/discord.js";
 import * as gateway from "#/lib/discord/gateway.js";
 
+export type RemoteAuthLogin = {
+  request: {
+    readonly method: "POST";
+    readonly path: "/users/@me/remote-auth/login";
+    ticket: string;
+  };
+  response: {
+    encrypted_token: string;
+  };
+};
+
+export type FetchMessage = {
+  request: {
+    readonly method: "GET";
+    readonly path: `/channels/${discord.ID}/messages`;
+    limit?: number;
+    around?: discord.ID;
+    before?: discord.ID;
+    after?: discord.ID;
+  };
+  response: Message[];
+};
+
+export type SendMessageBody = {
+  content: string;
+  nonce?: string;
+  allowed_mentions?: {
+    replied_user?: boolean;
+  };
+  message_reference?: {
+    message_id?: discord.ID;
+    channel_id?: discord.ID;
+    guild_id?: discord.ID;
+  };
+};
+
+export type SendMessage = {
+  request: {
+    readonly method: "POST";
+    readonly path: `/channels/${discord.ID}/messages`;
+  } & (
+    | {
+        readonly body: "multipart";
+        payload_json: SendMessageBody;
+        [key: string]: string | Blob | Record<string, unknown>;
+      }
+    | (SendMessageBody & {
+        readonly body?: "json";
+      })
+  );
+  response: Message;
+};
+
+export function generateNonce(): string {
+  return [
+    "kaicord",
+    (Date.now() % 86_400_000).toString(36),
+    Math.floor(Math.random() * 1_000_000).toString(36),
+  ].join("-");
+}
+
+export type Method = "GET" | "POST" | "PATCH" | "DELETE";
+
+export interface Action {
+  request: {
+    readonly method: Method;
+    readonly path: string;
+  } & (
+    | {
+        readonly body?: "json";
+        [key: string]: unknown;
+      }
+    | {
+        readonly body: "multipart";
+        [key: string]: string | Blob | Record<string, unknown>;
+      }
+  );
+  response: unknown;
+}
+
 export type Channel = {
   id: string;
   type: discord.ChannelType;
@@ -190,40 +270,6 @@ export class ViteClient implements HTTPWSClient {
 
 export const Endpoint = "https://discord.com/api/v9";
 
-export type FetchMessage = {
-  request: {
-    readonly method: "GET";
-    readonly path: `/channels/${discord.ID}/messages`;
-    limit?: number;
-    around?: discord.ID;
-    before?: discord.ID;
-    after?: discord.ID;
-  };
-  response: Message[];
-};
-
-export type RemoteAuthLogin = {
-  request: {
-    readonly method: "POST";
-    readonly path: "/users/@me/remote-auth/login";
-    ticket: string;
-  };
-  response: {
-    encrypted_token: string;
-  };
-};
-
-export type Method = "GET" | "POST" | "PATCH" | "DELETE";
-
-export interface Action {
-  request: {
-    readonly method: Method;
-    readonly path: string;
-    [key: string]: unknown;
-  };
-  response: unknown;
-}
-
 export class Client {
   static default() {
     let client: HTTPWSClient;
@@ -256,11 +302,42 @@ export class Client {
         url.searchParams.set(k, String(v));
       }
     } else {
-      const json = { ...req } as Record<string, unknown>;
-      delete json.method;
-      delete json.path;
-      headers["Content-Type"] = "application/json";
-      body = JSON.stringify(json);
+      switch (req.body) {
+        case "multipart": {
+          const formData = new FormData();
+          Object.entries(req)
+            .filter((e) => !["method", "path", "body"].includes(e[0]))
+            .forEach((e) => {
+              const k = e[0];
+              const v = e[1];
+              if (typeof v == "string" || v instanceof Blob) {
+                formData.append(k, v, v instanceof File ? v.name : undefined);
+              } else if (typeof v == "object") {
+                const json = JSON.stringify(v);
+                const blob = new Blob([json], { type: "application/json" });
+                formData.append(k, blob);
+              } else {
+                throw new Error(`unknown body type ${typeof v}`);
+              }
+            });
+          headers["Content-Type"] = "multipart/form-data";
+          body = formData;
+          break;
+        }
+        case "json":
+        case undefined: {
+          const json = { ...req } as Record<string, unknown>;
+          delete json.method;
+          delete json.path;
+          delete json.body;
+          headers["Content-Type"] = "application/json";
+          body = JSON.stringify(json);
+          break;
+        }
+        default: {
+          throw new Error(`unknown body type`);
+        }
+      }
     }
 
     const resp = await fetch(url.toString(), {

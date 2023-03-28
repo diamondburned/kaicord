@@ -39,6 +39,7 @@
     margin: 0;
     aspect-ratio: 1/1;
     border-radius: 100px;
+    user-select: none;
   }
 
   .icon.inline {

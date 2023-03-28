@@ -7,7 +7,7 @@ export type Timestamp = `${number}-${number}-${number}T${number}:${number}:${num
 
 export type State = {
   guilds: Map<ID, Guild>;
-  friends: Map<ID, User>;
+  friends: Map<ID, Friend>;
   privateChannels: Map<ID, Channel>;
 };
 
@@ -16,17 +16,32 @@ export type Guild = {
   name: string;
   icon?: string;
   roles: GuildRole[];
-  members: Map<ID, GuildMember>;
+  members: Map<ID, Member>;
   channels: Map<ID, Channel>;
 };
 
+// User describes a user that belongs in either a guild or a private channel.
 export type User = {
   id: ID;
   username: string;
   discriminator: string;
   avatar?: string;
   bot: boolean;
-};
+} & (
+  | {
+      // Private channel.
+      guild?: undefined;
+    }
+  | {
+      // Guild.
+      guild: store.Readable<Guild>;
+      roles: store.Readable<GuildRole[] | undefined>; // undefined if not loaded yet
+      nick?: string;
+    }
+);
+
+export type Friend = Extract<User, { guild?: undefined }>;
+export type Member = Extract<User, { guild: store.Readable<Guild> }>;
 
 // ChannelDMTypes are the types of channels that are direct messages.
 export type ChannelDMTypes = ChannelType.DirectMessage | ChannelType.GroupDM;
@@ -83,8 +98,6 @@ export type Message = {
   id: ID;
   type: MessageType;
   channel: store.Readable<Channel>;
-  author: store.Readable<User & { member?: GuildMember }>;
-  guild?: store.Readable<Guild>;
   content: string;
   timestamp: Date;
   editedTimestamp?: Date;
@@ -102,7 +115,16 @@ export type Message = {
         channelID: ID;
         guildID?: ID;
       };
-};
+} & (
+  | {
+      author: store.Readable<Friend>;
+      guild?: undefined;
+    }
+  | {
+      author: store.Readable<Member>;
+      guild: store.Readable<Guild>;
+    }
+);
 
 export enum MessageType {
   DefaultMessage,
@@ -131,11 +153,6 @@ export enum MessageType {
   ContextMenuCommand,
   AutoModerationActionMessage,
 }
-
-export type GuildMember = User & {
-  guild: store.Readable<Guild>;
-  roles: store.Readable<GuildRole[]>;
-};
 
 export type GuildRole = {
   id: ID;
@@ -178,12 +195,15 @@ export function channelName(channel: Channel, hash = true): string {
         return channel.name;
       }
 
-      const names = store
-        .get(channel.recipients)
+      const recipients = store.get(channel.recipients);
+      if (recipients.length == 1) {
+        return `${recipients[0].username}#${recipients[0].discriminator}`;
+      }
+
+      const names = recipients
         .map((user) => user.username)
         .filter((name) => name)
         .join(", ");
-
       if (names.length > 0) {
         return names;
       }
