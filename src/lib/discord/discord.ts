@@ -46,6 +46,12 @@ export type Member = Extract<User, { guild: store.Readable<Guild> }>;
 // ChannelDMTypes are the types of channels that are direct messages.
 export type ChannelDMTypes = ChannelType.DirectMessage | ChannelType.GroupDM;
 
+// ChannelThreadTypes are the types of channels that are threads.
+export type ChannelThreadTypes =
+  | ChannelType.GuildPublicThread
+  | ChannelType.GuildPrivateThread
+  | ChannelType.GuildNewsThread;
+
 export type Channel = {
   id: ID;
   name?: string;
@@ -56,6 +62,7 @@ export type Channel = {
       nsfw?: boolean;
       guild: store.Readable<Guild>;
       position: number;
+      threads?: Map<ID, Channel>;
     }
   | {
       type: ChannelDMTypes;

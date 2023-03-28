@@ -45,8 +45,12 @@
       <Icon url={discord.userAvatar($author)} name={$author.username} avatar={true} />
     </aside>
     <p class="header">
-      <span class="author" style="--role-color: {color}">
-        {$author.username}
+      <span class="author" title={$author.username} style="--role-color: {color}">
+        {#if $author.guild && $author.nick}
+          {$author.nick}
+        {:else}
+          {$author.username}
+        {/if}
       </span>
       <time
         class="timestamp"

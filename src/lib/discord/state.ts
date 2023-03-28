@@ -47,6 +47,7 @@ export function convertMember(
         .filter((role) => role);
       return roles;
     }),
+    nick: member.nick,
   };
 }
 
@@ -54,7 +55,7 @@ export function convertGuildChannel(
   state: StateStore,
   channel: api.Channel,
   guildID: string
-): discord.Channel | null {
+): Extract<discord.Channel, { type: Exclude<discord.ChannelType, discord.ChannelDMTypes> }> | null {
   switch (channel.type) {
     case discord.ChannelType.DirectMessage:
     case discord.ChannelType.GroupDM: {
@@ -107,6 +108,17 @@ export function convertPrivateChannel(
   }
 }
 
+export function convertAttachment(attachment: api.Message["attachments"][number]) {
+  return {
+    ...attachment,
+    proxyURL: attachment.proxy_url,
+  };
+}
+
+export function convertTimestamp(timestamp: string): Date {
+  return new Date(Date.parse(timestamp));
+}
+
 export function convertChannelMessage(state: StateStore, message: api.Message): discord.Message {
   const stateStore = state;
   const v = {
@@ -114,14 +126,11 @@ export function convertChannelMessage(state: StateStore, message: api.Message): 
     type: message.type,
     content: message.content,
     channel: store.derived(state, (state) => unwrap(stateChannel(state, message.channel_id))),
-    timestamp: new Date(Date.parse(message.timestamp)),
+    timestamp: convertTimestamp(message.timestamp),
     editedTimestamp: message.edited_timestamp
-      ? new Date(Date.parse(message.edited_timestamp))
+      ? convertTimestamp(message.edited_timestamp)
       : undefined,
-    attachments: (message.attachments ?? []).map((attachment) => ({
-      ...attachment,
-      proxyURL: attachment.proxy_url,
-    })),
+    attachments: (message.attachments ?? []).map(convertAttachment),
     reference: message.referenced_message
       ? // I wonder if this could cause a stack overflow by having cyclic message
         // references.
@@ -192,6 +201,14 @@ function convertGuildCreate(state: StateStore, guild: gateway.GuildCreateData): 
     const ch = convertGuildChannel(state, channel, guild.id);
     if (ch) {
       g.channels.set(ch.id, ch);
+
+      if (guild.threads) {
+        ch.threads = new Map();
+        guild.threads
+          .filter((thread) => thread.parent_id === ch.id)
+          .map((thread) => unwrap(convertGuildChannel(state, thread, guild.id)))
+          .forEach((thread) => g.channels.set(thread.id, thread));
+      }
     }
   }
 
@@ -202,6 +219,8 @@ export class State extends gateway.Session implements StateStore {
   public readonly state = store.writable(State.reset());
   public readonly chMessages = new Map<discord.ID, store.Writable<discord.Message[]>>();
   public readonly self = store.writable<discord.Friend>();
+
+  private subscribedGuilds = new Set<discord.ID>();
 
   constructor(
     public readonly client: api.Client,
@@ -240,10 +259,11 @@ export class State extends gateway.Session implements StateStore {
 
   // user gets the user with the given ID. If no user ID is given, the current
   // user is returned.
-  user(
-    guildID: discord.ID | null,
-    userID = store.get(this.selfID)
-  ): store.Readable<discord.User | null> {
+  user(guildID: discord.ID | null, userID: discord.ID): store.Readable<discord.User | null> {
+    const self = store.get(this.self);
+    if (guildID == null && self.id == userID) {
+      return this.self;
+    }
     return store.derived(this.state, (state) => {
       if (guildID) {
         const guild = unwrap(state.guilds.get(unwrap(guildID)));
@@ -275,6 +295,51 @@ export class State extends gateway.Session implements StateStore {
     );
 
     this.chMessages.set(id, list);
+
+    switch (channel.type) {
+      case discord.ChannelType.DirectMessage:
+      case discord.ChannelType.GroupDM: {
+        break;
+      }
+      default: {
+        const guild = store.get(channel.guild);
+
+        if (!this.subscribedGuilds.has(guild.id)) {
+          // Send this so we can have a list of threads later on.
+          this.send({
+            op: 14,
+            d: {
+              guild_id: guild.id,
+              typing: true,
+              threads: true,
+              activities: false,
+            },
+          });
+          this.subscribedGuilds.add(guild.id);
+        }
+
+        // We'll also request all the members of the messages that we just
+        // fetched.
+        const memberIDs = new Set<discord.ID>();
+        for (const message of messages) {
+          if (!guild.members.has(message.author.id)) {
+            memberIDs.add(message.author.id);
+          }
+        }
+
+        if (memberIDs.size > 0) {
+          this.send({
+            op: 8,
+            d: {
+              guild_id: guild.id,
+              user_ids: Array.from(memberIDs),
+              presences: false,
+            },
+          });
+        }
+      }
+    }
+
     return list;
   }
 
@@ -317,6 +382,16 @@ export class State extends gateway.Session implements StateStore {
         break;
       }
 
+      case "GUILD_MEMBERS_CHUNK": {
+        const guild = state.guilds.get(ev.d.guild_id);
+        if (guild) {
+          for (const member of ev.d.members) {
+            guild.members.set(member.user.id, convertMember(this.state, guild.id, member));
+          }
+        }
+        break;
+      }
+
       case "CHANNEL_CREATE": {
         const channel = ev.d;
         if (channel.guild_id) {
@@ -355,6 +430,32 @@ export class State extends gateway.Session implements StateStore {
               }
             }
         }
+        break;
+      }
+
+      // TODO: handle more than just thread syncs. We can just tell the user to
+      // reload for now :)
+      case "THREAD_LIST_SYNC": {
+        let channelIDs = ev.d.channel_ids ?? [];
+        if (channelIDs.length == 0) {
+          const guild = state.guilds.get(ev.d.guild_id);
+          if (!guild) {
+            break;
+          }
+          for (const [chID] of guild.channels) {
+            channelIDs.push(chID);
+          }
+        }
+
+        let channelThreads = new Map<discord.ID, discord.Channel[]>();
+        for (const chID of channelIDs) {
+          const threads = ev.d.threads.filter((thread) => thread.parent_id == chID);
+          channelThreads.set(
+            chID,
+            threads.map((thread) => unwrap(convertGuildChannel(this.state, thread, ev.d.guild_id)))
+          );
+        }
+
         break;
       }
     }
@@ -415,7 +516,11 @@ export class State extends gateway.Session implements StateStore {
             case "MESSAGE_UPDATE": {
               const message = messages.find((m) => m.id == ev.d.id);
               if (message) {
-                Object.assign(message, convertChannelMessage(this.state, ev.d));
+                if (ev.d.content) message.content = ev.d.content;
+                if (ev.d.attachments) message.attachments = ev.d.attachments.map(convertAttachment);
+                if (ev.d.edited_timestamp)
+                  message.editedTimestamp = convertTimestamp(ev.d.edited_timestamp);
+                // TODO: embeds
               }
 
               break;

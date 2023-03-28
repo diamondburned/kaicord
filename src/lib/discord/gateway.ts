@@ -93,6 +93,35 @@ export type DispatchEvent = {
   | { readonly t: "MESSAGE_CREATE"; d: api.Message & { member?: Omit<api.Member, "user"> } }
   | { readonly t: "MESSAGE_UPDATE"; d: api.Message & { member?: Omit<api.Member, "user"> } }
   | { readonly t: "MESSAGE_DELETE"; d: { id: string; channel_id: string } }
+  | { readonly t: "THREAD_CREATE"; d: api.Channel }
+  | { readonly t: "THREAD_UPDATE"; d: { id: string } & Partial<api.Channel> }
+  | { readonly t: "THREAD_DELETE"; d: { id: string; guild_id?: string; parent_id?: string } }
+  | {
+      readonly t: "THREAD_LIST_SYNC";
+      d: {
+        guild_id: string;
+        channel_ids: string[];
+        threads: api.Channel[];
+      };
+    }
+  | {
+      readonly t: "GUILD_MEMBERS_CHUNK";
+      d: {
+        guild_id: string;
+        members: api.Member[];
+        // presences
+      };
+    }
+  | {
+      readonly t: "TYPING_START";
+      d: {
+        channel_id: string;
+        guild_id?: string;
+        user_id: string;
+        member?: api.Member; // unsure if partial, be careful!
+        timestamp: number; // unix
+      };
+    }
 );
 
 export type Command =
@@ -109,6 +138,25 @@ export type Command =
   | {
       readonly op: 6;
       d: SessionData;
+    }
+  | {
+      readonly op: 8;
+      d: {
+        guild_id: string | string[];
+        user_ids?: string[];
+        query?: string;
+        limit?: number;
+        presences: boolean;
+      };
+    }
+  | {
+      readonly op: 14;
+      d: {
+        typing: boolean;
+        threads: boolean;
+        activities: boolean;
+        guild_id: string;
+      };
     };
 
 export class Session {

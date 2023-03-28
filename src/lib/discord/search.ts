@@ -25,9 +25,9 @@ export class ChannelSearcher {
     const matches: (discord.Channel & { _score: number })[] = [];
 
     const addMatch = (channel: discord.Channel, result: fuzzy.MatchResult) => {
-      // if (score < this.threshold) {
-      //   return;
-      // }
+      if (result.score < this.threshold) {
+        return;
+      }
 
       if (matches.length < this.limit) {
         console.debug(
@@ -65,6 +65,12 @@ export class ChannelSearcher {
 
     for (const [_, guild] of state.guilds) {
       for (const [_, channel] of guild.channels) {
+        switch (channel.type) {
+          case discord.ChannelType.DirectMessage:
+          case discord.ChannelType.GroupDM:
+            continue;
+        }
+
         if (!discord.TextChannelTypes.has(channel.type)) {
           continue;
         }
@@ -72,6 +78,15 @@ export class ChannelSearcher {
         const match = fuzzy.match(input, `${guild.name} ${channel.name}`);
         if (match) {
           addMatch(channel, match);
+        }
+
+        if (channel.threads) {
+          for (const [_, thread] of channel.threads) {
+            const match = fuzzy.match(input, `${guild.name} ${thread.name}`);
+            if (match) {
+              addMatch(thread, match);
+            }
+          }
         }
       }
     }

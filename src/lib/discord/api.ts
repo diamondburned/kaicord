@@ -85,6 +85,7 @@ export type Channel = {
   id: string;
   type: discord.ChannelType;
   name: string;
+  parent_id?: string;
   topic?: string;
   nsfw?: boolean;
   guild_id?: string;
@@ -119,13 +120,58 @@ export type Message = {
   author: User;
   timestamp: string;
   edited_timestamp?: string;
-  attachments: {
+  attachments?: {
     id: string;
     filename: string;
     size: number;
     url: string;
     proxy_url: string;
   }[];
+  embeds?: Partial<{
+    title: string;
+    type: "rich" | "image" | "video" | "gifv" | "article" | "link";
+    description: string;
+    url: string;
+    timestamp: string;
+    footer: {
+      text: string;
+      icon_url?: string;
+      proxy_icon_url?: string;
+    };
+    image: {
+      url: string;
+      proxy_url: string;
+      height?: number;
+      width?: number;
+    };
+    thumbnail: {
+      url?: string;
+      proxy_url?: string;
+      height?: number;
+      width?: number;
+    };
+    video: {
+      url: string;
+      proxy_url?: string;
+      height: number;
+      width: number;
+    };
+    provider: {
+      name: string;
+      url: string;
+    };
+    author: {
+      name?: string;
+      url?: string;
+      icon_url?: string;
+      proxy_icon_url?: string;
+    };
+    fields: {
+      name: string;
+      value: string;
+      inline?: boolean;
+    }[];
+  }>[];
   message_reference?: {
     message_id?: string;
     channel_id?: string;
