@@ -167,7 +167,7 @@
   p.error,
   p.qr-info {
     max-width: 400px;
-    margin: 1em auto;
+    margin: 0em auto;
   }
 
   p.qr-info .username {
@@ -178,8 +178,16 @@
     width: 100%;
     max-width: 400px;
     height: auto;
-    margin: 0 auto;
+    margin: 0.5em auto;
+    padding: 0 1em;
     max-height: 100%;
     border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 250px) {
+    main {
+      justify-content: flex-start;
+    }
   }
 </style>
