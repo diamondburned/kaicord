@@ -59,7 +59,6 @@ export default defineConfig({
   publicDir: "../public",
   server: {
     port: 5000,
-    // hmr: false,
     proxy: {
       "/__discord__": {
         target: "https://discord.com",

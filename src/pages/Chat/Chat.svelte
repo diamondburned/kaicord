@@ -1,5 +1,6 @@
 <script lang="ts">
   import * as local from "#/lib/local.js";
+  import * as svelte from "svelte";
   import * as search from "#/lib/discord/search.js";
   import * as discord from "#/lib/discord/discord.js";
 
@@ -7,6 +8,8 @@
   import ChannelList from "#/pages/Chat/ChannelList.svelte";
   import MessageView from "#/pages/Chat/MessageView.svelte";
   import { fade } from "svelte/transition";
+  import { move as moveView, Direction } from "#/components/ViewSwitcher.svelte";
+  import { ctx as ctxKeys, Key, Keys, KeysStore } from "#/components/SoftKeyNavigable.svelte";
 
   enum Sidebar {
     Search = "Search",
@@ -17,16 +20,40 @@
   const session = local.session;
   const trackedRecents = local.recentChannels;
 
-  let sidebar = Sidebar.Inbox;
-  let sidebarOpen = false; // only works with @media
   let recentChannels: discord.Channel[] = [];
+
+  const viewCycler = moveView;
+  function directionalSoftKey(direction: Direction, current: Sidebar): Key | undefined {
+    const next = viewCycler(Object.values(Sidebar), sidebar, direction);
+    if (next == current) {
+      return undefined;
+    }
+    return {
+      label: next,
+      on: () => (sidebar = next),
+    };
+  }
+
+  $: softKeys = {
+    sidebar: {
+      left: directionalSoftKey("left", sidebar),
+      right: directionalSoftKey("right", sidebar),
+    },
+    messages: {
+      left: {
+        label: "Back",
+        on: () => (sidebarForceOpen = true),
+      },
+      // TODO: center: send message
+    },
+  } as Record<"sidebar" | "messages", Keys>;
 
   let searchInput = "";
   let searcher = new search.ChannelSearcher($session.state);
 
   let current: discord.Channel | null = null;
   function onSelectEvent(event: CustomEvent<discord.Channel>) {
-    sidebarOpen = false;
+    sidebarForceOpen = false;
 
     const channel = event.detail;
     current = channel;
@@ -49,6 +76,13 @@
     });
   }
 
+  let sidebar = Sidebar.Inbox;
+  let sidebarForceOpen = false; // only works with @media
+  $: sidebarOpen = sidebarForceOpen || current == null;
+
+  const currentSoftKeys = svelte.getContext<KeysStore>(ctxKeys);
+  $: currentSoftKeys.set(softKeys[sidebarOpen ? "sidebar" : "messages"]);
+
   $: searchedChannels = searcher.search(searchInput);
   $: mentionedChannels = [] as discord.Channel[]; // TODO
   $: {
@@ -63,9 +97,14 @@
   }
 </script>
 
-<div class="container" class:sidebar-open={sidebarOpen || !current}>
+<div class="container" class:sidebar-open={sidebarOpen}>
   <aside id="sidebar">
-    <ViewSwitcher id="sidebar-switcher" values={Object.values(Sidebar)} bind:value={sidebar} />
+    <ViewSwitcher
+      id="sidebar-switcher"
+      values={Object.values(Sidebar)}
+      bind:value={sidebar}
+      cycler={viewCycler}
+    />
     {#if sidebar == Sidebar.Search}
       <div id="search" transition:fade|local={{ duration: 100 }}>
         <input type="text" bind:value={searchInput} placeholder="Search channels..." />
@@ -106,7 +145,7 @@
   </aside>
 
   <main id="chat">
-    <MessageView channel={current} on:menu={() => (sidebarOpen = true)} />
+    <MessageView channel={current} on:menu={() => (sidebarForceOpen = true)} />
   </main>
 </div>
 

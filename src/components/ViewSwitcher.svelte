@@ -2,10 +2,46 @@
   Inspired by Adw.ViewStack:
   https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1-latest/class.ViewStack.html
 -->
+<script lang="ts" context="module">
+  export type Direction = "left" | "right";
+  export type Cycler = <T>(values: T[], current: T, direction: Direction) => T;
+
+  // cycle is a cycler function that goes to the next or previous view, cycling
+  // back to the other end of the list when the end is reached.
+  export function cycle<T>(values: T[], value: T, direction: Direction): T {
+    let ix = values.indexOf(value);
+    switch (direction) {
+      case "left":
+        ix = (ix - 1 + values.length) % values.length;
+        break;
+      case "right":
+        ix = (ix + 1) % values.length;
+        break;
+    }
+    return values[ix];
+  }
+
+  // move is a cycler function that goes to the next or previous view
+  // but stop at the first or last view.
+  export function move<T>(values: T[], value: T, direction: Direction): T {
+    let ix = values.indexOf(value);
+    switch (direction) {
+      case "left":
+        ix = Math.max(ix - 1, 0);
+        break;
+      case "right":
+        ix = Math.min(ix + 1, values.length - 1);
+        break;
+    }
+    return values[ix];
+  }
+</script>
+
 <script lang="ts">
   export let values: string[];
   export let value: string;
   export let id: string;
+  export let cycler: Cycler = cycle;
 
   let nav: HTMLElement | undefined;
 
@@ -15,23 +51,13 @@
       return;
     }
 
-    console.log("ViewSwitcher is visible, handling keyboard event", event);
     switch (event.key) {
       case "ArrowLeft":
-      case "ArrowRight": {
-        let ix = values.indexOf(value);
-        switch (event.key) {
-          case "ArrowLeft":
-            ix = Math.max(0, ix - 1);
-            break;
-          case "ArrowRight":
-            ix = Math.min(values.length - 1, ix + 1);
-            break;
-        }
-        value = values[ix];
-        console.log("arrow key pressed, switching to", value);
+        value = cycler(values, value, "left");
         break;
-      }
+      case "ArrowRight":
+        value = cycler(values, value, "right");
+        break;
     }
   }
 </script>
@@ -45,41 +71,41 @@
   {/each}
 </nav>
 
-<style>
+<style lang="scss">
   nav {
     display: grid;
     grid-template-columns: repeat(var(--n), 1fr);
     background-color: var(--color-bg-2);
-  }
 
-  nav > input {
-    display: none;
-  }
+    input {
+      display: none;
+    }
 
-  nav > label {
-    padding: 0; /* KaiOS */
-    color: var(--color-text); /* KaiOS */
-    margin-bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 75ms ease;
-    border-bottom: 2px solid transparent;
-    border-top: 2px solid transparent;
-  }
+    label {
+      padding: 0; /* KaiOS */
+      color: var(--color-text); /* KaiOS */
+      margin-bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 75ms ease;
+      border-bottom: 2px solid transparent;
+      border-top: 2px solid transparent;
 
-  /* KaiOS-specific */
-  nav > label::before,
-  nav > label::after {
-    display: none;
-  }
+      /* KaiOS-specific */
+      &::before,
+      &::after {
+        display: none;
+      }
+    }
 
-  nav > input:checked + label {
-    border-bottom: 2px solid var(--color-force);
-    background-color: #7289da66;
-  }
+    input:checked + label {
+      border-bottom: 2px solid var(--color-force);
+      background-color: #7289da66;
+    }
 
-  nav > input:hover + label {
-    background-color: #7289da33;
+    input:hover + label {
+      background-color: #7289da33;
+    }
   }
 </style>

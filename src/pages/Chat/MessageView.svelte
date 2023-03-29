@@ -549,7 +549,7 @@
     box-sizing: border-box;
     z-index: 1;
 
-    @media (max-width: 250px) {
+    @media (max-width: $tiny-width) {
       --padding: 0.1em;
       margin: -0.15em 0.15em;
     }
