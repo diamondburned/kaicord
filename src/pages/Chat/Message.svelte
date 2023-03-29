@@ -33,13 +33,7 @@
   }
 </script>
 
-<section
-  {id}
-  tabindex="-1"
-  class="message"
-  class:compact
-  class:sending={message.sending && !message.error}
->
+<section {id} class="message" class:compact class:sending={message.sending && !message.error}>
   {#if !compact}
     <aside>
       <Icon url={discord.userAvatar($author)} name={$author.username} avatar={true} />

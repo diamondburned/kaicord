@@ -197,7 +197,7 @@
 </script>
 
 <header>
-  <button class="menu" on:click={onMenu}>
+  <button class="menu" on:click={onMenu} tabindex="0">
     <Symbol name="menu" />
   </button>
   {#if channel}
@@ -258,6 +258,7 @@
                       return sending;
                     });
                   }}
+                  tabindex="0"
                 >
                   <Symbol name="delete" tooltip="Delete attachment" />
                 </button>
@@ -273,6 +274,7 @@
           class="flat"
           class:active={showInputMenu}
           on:click={() => (showInputMenu = true)}
+          tabindex="0"
         >
           <Symbol name="add" tooltip="Show input menu" />
         </button>
@@ -297,7 +299,7 @@
           <h5>Input Menu</h5>
           <ul class="not">
             <li>
-              <button type="button" on:click={() => {}} disabled>
+              <button type="button" on:click={() => {}} tabindex="-1" disabled>
                 <Symbol name="add_reaction" /> Emoji
               </button>
             </li>
@@ -308,6 +310,7 @@
                   showInputMenu = false;
                   attachmentInput.click();
                 }}
+                tabindex="-1"
               >
                 <Symbol name="attach_file" /> File
               </button>
@@ -321,6 +324,7 @@
         bind:value={$sending.content}
         on:keydown={onInputKeyDown}
         disabled={!canSendMessage}
+        tabindex="0"
       />
     </form>
   {/if}

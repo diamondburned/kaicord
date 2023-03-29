@@ -5,14 +5,15 @@
   import * as search from "#/lib/discord/search.js";
   import * as discord from "#/lib/discord/discord.js";
 
+  import ViewSwitcher from "#/components/ViewSwitcher.svelte";
   import ChannelList from "#/pages/Chat/ChannelList.svelte";
   import MessageView from "#/pages/Chat/MessageView.svelte";
   import { fade } from "svelte/transition";
 
   enum Sidebar {
-    Search,
-    Inbox,
-    Browse,
+    Search = "Search",
+    Inbox = "Inbox",
+    Browse = "Browse",
   }
 
   const session = local.session;
@@ -66,32 +67,7 @@
 
 <div class="container" class:sidebar-open={sidebarOpen || !current}>
   <aside id="sidebar">
-    <nav>
-      <input
-        type="radio"
-        name="sidebar"
-        id="select-browse"
-        bind:group={sidebar}
-        value={Sidebar.Browse}
-      />
-      <label for="select-browse">Browse</label>
-      <input
-        type="radio"
-        name="sidebar"
-        id="select-inbox"
-        bind:group={sidebar}
-        value={Sidebar.Inbox}
-      />
-      <label for="select-inbox">Inbox</label>
-      <input
-        type="radio"
-        name="sidebar"
-        id="select-search"
-        bind:group={sidebar}
-        value={Sidebar.Search}
-      />
-      <label for="select-search">Search</label>
-    </nav>
+    <ViewSwitcher id="sidebar-switcher" values={Object.values(Sidebar)} bind:value={sidebar} />
     {#if sidebar == Sidebar.Search}
       <div id="search" transition:fade|local={{ duration: 100 }}>
         <input type="text" bind:value={searchInput} placeholder="Search channels..." />
@@ -203,7 +179,7 @@
     flex-direction: column;
   }
 
-  nav,
+  #sidebar > :global(nav),
   #chat > :global(header) {
     min-height: var(--header-height);
     height: auto;
@@ -212,43 +188,6 @@
     position: sticky;
     top: 0;
     z-index: 1;
-  }
-
-  nav {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    background-color: var(--color-bg-2);
-  }
-
-  nav > input {
-    display: none;
-  }
-
-  nav > label {
-    padding: 0; /* KaiOS */
-    color: var(--color-text); /* KaiOS */
-    margin-bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 75ms ease;
-    border-bottom: 2px solid transparent;
-    border-top: 2px solid transparent;
-  }
-
-  /* KaiOS-specific */
-  nav > label::before,
-  nav > label::after {
-    display: none;
-  }
-
-  nav > input:checked + label {
-    border-bottom: 2px solid var(--color-force);
-    background-color: #7289da66;
-  }
-
-  nav > input:hover + label {
-    background-color: #7289da33;
   }
 
   p.empty {

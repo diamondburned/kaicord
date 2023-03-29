@@ -85,6 +85,7 @@
   class:selected
   class:mentioned={!!mentions}
   on:click={() => dispatch("select", channel)}
+  tabindex="0"
 >
   {#if channel.type == discord.ChannelType.DirectMessage}
     <Icon
@@ -142,7 +143,8 @@
     background: var(--color-bg-alt);
   }
 
-  .channel:hover {
+  .channel:hover,
+  .channel:focus {
     background: var(--color-bg);
   }
 

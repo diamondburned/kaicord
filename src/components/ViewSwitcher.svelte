@@ -3,8 +3,8 @@
   https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1-latest/class.ViewStack.html
 -->
 <script lang="ts">
-  export let selected: string;
   export let values: string[];
+  export let value: string;
   export let id: string;
 
   let nav: HTMLElement | undefined;
@@ -15,10 +15,11 @@
       return;
     }
 
+    console.log("ViewSwitcher is visible, handling keyboard event", event);
     switch (event.key) {
       case "ArrowLeft":
       case "ArrowRight": {
-        let ix = values.indexOf(selected);
+        let ix = values.indexOf(value);
         switch (event.key) {
           case "ArrowLeft":
             ix = Math.max(0, ix - 1);
@@ -27,7 +28,8 @@
             ix = Math.min(values.length - 1, ix + 1);
             break;
         }
-        selected = values[ix];
+        value = values[ix];
+        console.log("arrow key pressed, switching to", value);
         break;
       }
     }
@@ -37,9 +39,9 @@
 <svelte:window on:keydown={onNavKey} />
 
 <nav bind:this={nav} style="--n: {values.length}">
-  {#each values as value, i}
-    <input type="radio" name="sidebar" id="{id}-{value}" bind:group={selected} value={i} />
-    <label for="{id}-{value}">{value}</label>
+  {#each values as v}
+    <input type="radio" name="sidebar" id="{id}-{v}" bind:group={value} value={v} />
+    <label for="{id}-{v}">{v}</label>
   {/each}
 </nav>
 
@@ -47,6 +49,7 @@
   nav {
     display: grid;
     grid-template-columns: repeat(var(--n), 1fr);
+    background-color: var(--color-bg-2);
   }
 
   nav > input {

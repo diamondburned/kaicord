@@ -19,7 +19,7 @@
   $: filteredChannels = channels.filter((channel) => discord.TextChannelTypes.has(channel.type));
 </script>
 
-<div class="channel-list">
+<div class="channel-list" data-dpad="list">
   {#each filteredChannels as channel}
     <ChannelItem
       {channel}
