@@ -6,6 +6,7 @@
   import Message from "#/pages/Chat/Message.svelte";
 
   import { SendingMessage, RegularMessage } from "#/pages/Chat/Message.svelte";
+  import { channelIcon } from "#/pages/Chat/Channel.svelte";
 
   import * as svelte from "svelte";
   import * as store from "svelte/store";
@@ -123,8 +124,7 @@
 
       $session.client
         .do<api.SendMessage>(resp)
-        .then((message) => state.convertChannelMessage($session.state, message))
-        .then((message) => {
+        .then(() => {
           sendingMessages.update((sendingMessages) => {
             const index = sendingMessages.indexOf(sending);
             if (index != -1) {
@@ -204,8 +204,10 @@
     <h3>
       {#if channel.type == discord.ChannelType.DirectMessage}
         <Icon url={discord.userAvatar($recipients[0])} name={discord.channelName(channel)} inline />
+      {:else}
+        <Icon symbol={channelIcon(channel)} name={discord.channelName(channel)} inline />
       {/if}
-      {discord.channelName(channel)}
+      {discord.channelName(channel, false)}
       {#if guild}
         <span class="guild">
           —
@@ -334,6 +336,7 @@
   header {
     display: flex;
     align-items: center;
+    background-color: var(--color-bg);
   }
 
   header h3 {
@@ -389,7 +392,6 @@
   #messages {
     display: flex;
     flex-direction: column-reverse;
-    overflow: auto;
     max-width: 800px;
     margin: auto;
     padding-bottom: clamp(0.5em, 3vh, 1em);
@@ -532,6 +534,12 @@
 
   :global(#more-menu) li > button > :global(.material-symbols-rounded) {
     vertical-align: text-bottom;
+  }
+
+  footer {
+    position: sticky;
+    bottom: 0;
+    background-color: var(--color-bg);
   }
 
   @media (max-width: 250px) {

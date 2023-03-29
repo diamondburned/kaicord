@@ -23,7 +23,7 @@
 {#if url}
   <img class="icon" class:inline src={url} {alt} style="--size: {size}" />
 {:else if symbol}
-  <div class="icon" aria-label={alt} style="--size: {size}">
+  <div class="icon" class:inline aria-label={alt} style="--size: {size}">
     <Symbol name={symbol} />
   </div>
 {:else}
@@ -44,6 +44,7 @@
 
   .icon.inline {
     vertical-align: top;
+    display: inline-flex;
   }
 
   div.icon {

@@ -138,6 +138,7 @@
 
 <style>
   .container {
+    --header-height: clamp(2.5em, 10vh, 3em);
     display: flex;
     width: calc(100%);
     height: calc(100%);
@@ -147,16 +148,15 @@
   #sidebar {
     display: grid;
     grid-template-rows: auto 1fr;
+    min-height: 100%;
     width: clamp(12em, 25%, 300px);
     border-right: 1px solid var(--color-bg-alt);
     background-color: var(--color-bg-2);
-    overflow: hidden;
-    z-index: 1;
-    height: 100%;
+    z-index: 2;
+    overflow: auto;
   }
 
   #sidebar > *:not(nav) {
-    overflow: hidden;
     /* Hack to make Svelte transitions work for this case.
 	   Taken from https://svelte.dev/repl/18c5847e8f104fa1b161c54598ec3996 */
     grid-column: 1/2;
@@ -179,16 +179,10 @@
     border: none;
     border-bottom: 1px solid var(--color-bg-alt);
     border-radius: 0;
-    overflow: auto;
-  }
-
-  /* ChannelList */
-  #search > :global(*:not(input)) {
-    overflow: auto;
-  }
-
-  #inbox {
-    overflow: auto;
+    background-color: var(--color-bg-2);
+    position: sticky;
+    top: var(--header-height);
+    z-index: 1;
   }
 
   #inbox section {
@@ -205,20 +199,25 @@
   #chat {
     flex: 1;
     display: flex;
+    overflow: auto;
     flex-direction: column;
   }
 
   nav,
   #chat > :global(header) {
-    height: clamp(2.5em, 10vh, 3em);
+    min-height: var(--header-height);
+    height: auto;
     border-bottom: 1px solid var(--color-bg-alt);
     box-sizing: border-box;
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 1;
   }
 
   nav {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+    background-color: var(--color-bg-2);
   }
 
   nav > input {

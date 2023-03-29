@@ -1,3 +1,33 @@
+<script lang="ts" context="module">
+  export function channelIcon(channel: discord.Channel): string {
+    switch (channel.type) {
+      case discord.ChannelType.DirectMessage:
+        return "person";
+      case discord.ChannelType.GroupDM:
+        return "group";
+      case discord.ChannelType.GuildText:
+      case discord.ChannelType.GuildPublicThread:
+      case discord.ChannelType.GuildPrivateThread:
+        return "tag";
+      case discord.ChannelType.GuildCategory:
+      case discord.ChannelType.GuildDirectory:
+        return "folder";
+      case discord.ChannelType.GuildVoice:
+      case discord.ChannelType.GuildStageVoice:
+        return "mic";
+      case discord.ChannelType.GuildNews:
+      case discord.ChannelType.GuildNewsThread:
+        return "newspaper";
+      case discord.ChannelType.GuildStore:
+        return "shopping_cart";
+      case discord.ChannelType.GuildForum:
+        return "question_answer";
+      default:
+        return "help";
+    }
+  }
+</script>
+
 <script lang="ts">
   import * as store from "svelte/store";
   import * as svelte from "svelte";
@@ -45,34 +75,6 @@
         return true;
       default:
         return false;
-    }
-  }
-
-  function channelIcon(channel: discord.Channel): string {
-    switch (channel.type) {
-      case discord.ChannelType.DirectMessage:
-        return "person";
-      case discord.ChannelType.GroupDM:
-        return "group";
-      case discord.ChannelType.GuildText:
-      case discord.ChannelType.GuildPublicThread:
-      case discord.ChannelType.GuildPrivateThread:
-        return "tag";
-      case discord.ChannelType.GuildCategory:
-      case discord.ChannelType.GuildDirectory:
-        return "folder";
-      case discord.ChannelType.GuildVoice:
-      case discord.ChannelType.GuildStageVoice:
-        return "mic";
-      case discord.ChannelType.GuildNews:
-      case discord.ChannelType.GuildNewsThread:
-        return "newspaper";
-      case discord.ChannelType.GuildStore:
-        return "shopping_cart";
-      case discord.ChannelType.GuildForum:
-        return "question_answer";
-      default:
-        return "help";
     }
   }
 </script>
