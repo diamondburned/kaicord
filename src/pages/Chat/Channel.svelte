@@ -122,7 +122,7 @@
   </aside>
 </button>
 
-<style>
+<style lang="scss">
   .channel {
     margin: 0;
     display: flex;
@@ -137,49 +137,49 @@
     width: 100%;
     text-align: left;
     color: var(--color-text);
-  }
 
-  .channel.selected {
-    background: var(--color-bg-alt);
-  }
+    &.selected {
+      background: var(--color-bg-alt);
+    }
 
-  .channel:hover,
-  .channel:focus {
-    background: var(--color-bg);
-  }
+    &:hover,
+    &:focus {
+      background: var(--color-bg);
+    }
 
-  .name small {
-    font-size: 0.85em;
+    .name {
+      margin: 0;
+      font-size: 0.9em;
+      line-height: 1.15em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      small {
+        font-size: 0.85em;
+      }
+    }
   }
 
   aside:empty {
     display: none;
   }
 
-  .channel .name {
-    margin: 0;
-    font-size: 0.9em;
-    line-height: 1.15em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .guild-icon {
     position: relative;
-  }
 
-  .guild-icon > :global(.icon:not(:first-child)) {
-    width: 0.75em;
-    height: 0.75em;
-    outline: 2px solid var(--color-bg-2);
-    position: absolute;
-    bottom: 0;
-    right: 0;
-  }
+    & > :global(.icon:not(:first-child)) {
+      width: 0.75em;
+      height: 0.75em;
+      outline: 2px solid var(--color-bg-2);
+      position: absolute;
+      bottom: 0;
+      right: 0;
+    }
 
-  .guild-icon > :global(.icon:not(:first-child) > .material-symbols-rounded) {
-    font-size: 0.5em;
-    font-weight: 900;
+    & > :global(.icon:not(:first-child) > .material-symbols-rounded) {
+      font-size: 0.5em;
+      font-weight: 900;
+    }
   }
 </style>

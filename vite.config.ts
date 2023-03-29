@@ -44,7 +44,11 @@ export default defineConfig({
       },
     }),
     svelte({
-      preprocess: sveltePreprocess(),
+      preprocess: sveltePreprocess({
+        scss: {
+          prependData: `@import "${path.resolve(__dirname, "./src/styles/variables.scss")}";`,
+        },
+      }),
     }),
   ],
   worker: {

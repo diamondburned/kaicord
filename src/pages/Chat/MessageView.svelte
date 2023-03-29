@@ -330,26 +330,35 @@
   {/if}
 </footer>
 
-<style>
-  header + * {
-    flex: 1;
-    box-shadow: 0 22px 18px -35px inset rgba(0, 0, 0, 0.85),
-      0 -22px 18px -35px inset rgba(0, 0, 0, 0.85);
-  }
-
+<style lang="scss">
   header {
     display: flex;
     align-items: center;
     background-color: var(--color-bg);
-  }
 
-  header h3 {
-    font-size: 1em;
-    margin: auto 0;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    line-height: 1.5;
+    & + * {
+      flex: 1;
+      box-shadow: 0 22px 18px -35px inset rgba(0, 0, 0, 0.85),
+        0 -22px 18px -35px inset rgba(0, 0, 0, 0.85);
+    }
+
+    h3 {
+      font-size: 1em;
+      margin: auto 0;
+      margin-left: 0.5em;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      line-height: 1.5;
+
+      @media (max-width: calc($kaios-width)) {
+        margin-left: 0;
+
+        .guild {
+          display: none;
+        }
+      }
+    }
   }
 
   .menu {
@@ -361,10 +370,14 @@
     align-items: center;
     padding: 0.25em;
     margin: 0 0.25em;
-  }
 
-  .menu:hover {
-    background-color: var(--color-bg-2);
+    &:hover {
+      background-color: var(--color-bg-2);
+    }
+
+    @media (min-width: calc($kaios-width + 1px)) {
+      display: none;
+    }
   }
 
   .loading {
@@ -378,19 +391,19 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-  }
 
-  /* Svelte fucking sucks. They had a proposal to fix this and they made
-	 it fucking garbage. Now we have to do this. */
-  .placeholder > :global(*:first-child) {
-    display: contents;
-    font-size: 7em;
-    margin: 0;
-  }
+    /* Svelte fucking sucks. They had a proposal to fix this and they made
+	   it fucking garbage. Now we have to do this. */
+    & > :global(*:first-child) {
+      display: contents;
+      font-size: 7em;
+      margin: 0;
+    }
 
-  .placeholder p {
-    padding: 0 1em;
-    text-align: center;
+    p {
+      padding: 0 1em;
+      text-align: center;
+    }
   }
 
   #messages {
@@ -409,71 +422,96 @@
     border-top: 1px solid var(--color-bg-alt);
     max-width: 800px;
     margin: auto;
+
+    & > #file-list {
+      grid-area: 1 / 1 / 2 / 3;
+    }
+
+    & > aside {
+      grid-area: 2 / 1 / 3 / 2;
+    }
+
+    & > textarea {
+      grid-area: 2 / 2 / 3 / 3;
+    }
+
+    textarea {
+      height: 2.15em;
+      resize: none;
+      margin: auto 0;
+      padding: 0.45em 0;
+      padding-right: 0.25em;
+      border: none;
+      border-radius: 0;
+      background: none;
+      scrollbar-width: thin;
+    }
+
+    textarea.multiline {
+      height: 4.45em;
+    }
+
+    aside {
+      width: 3.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      @media (max-width: $tiny-width) {
+        /* No more avatar to vertically align to. */
+        width: auto;
+      }
+    }
   }
 
-  #message-input > #file-list {
-    grid-area: 1 / 1 / 2 / 3;
-  }
+  #file-list {
+    ul {
+      margin-top: 0.35em;
 
-  #message-input > aside {
-    grid-area: 2 / 1 / 3 / 2;
-  }
+      @media (max-width: $tiny-width) {
+        margin-top: 0.25em;
+      }
+    }
 
-  #message-input > textarea {
-    grid-area: 2 / 2 / 3 / 3;
-  }
+    li {
+      margin: 0;
+      margin-right: 0.5em;
+      margin-left: 3.5em;
+      font-size: 0.95em;
 
-  #file-list ul {
-    margin-top: 0.35em;
-  }
+      @media (max-width: $tiny-width) {
+        margin: 0 0.5em;
+        font-size: 0.95em;
+      }
 
-  #file-list li {
-    margin: 0;
-    margin-right: 0.5em;
-    margin-left: 3.5em;
-    font-size: 0.95em;
-  }
+      :global(.material-symbols-rounded) {
+        vertical-align: text-bottom;
 
-  #file-list li :global(.material-symbols-rounded) {
-    vertical-align: text-bottom;
-  }
+        @media (max-width: $tiny-width) {
+          display: none;
+        }
+      }
 
-  #file-list .file-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+      .remove {
+        padding: 0.15em;
+        float: right;
 
-  #file-list li .remove {
-    padding: 0.15em;
-    float: right;
-  }
+        @media (max-width: $tiny-width) {
+          padding: 0.15em;
+          margin: 0;
+        }
+      }
 
-  #file-list li .remove:hover {
-    background-color: var(--color-del);
-  }
+      .remove:hover {
+        background-color: var(--color-del);
+      }
+    }
 
-  #message-input textarea {
-    height: 2.15em;
-    resize: none;
-    margin: auto 0;
-    padding: 0.45em 0;
-    padding-right: 0.25em;
-    border: none;
-    border-radius: 0;
-    background: none;
-    scrollbar-width: thin;
-  }
-
-  #message-input textarea.multiline {
-    height: 4.45em;
-  }
-
-  #message-input aside {
-    width: 3.5em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    .file-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   #show-menu {
@@ -484,19 +522,19 @@
     padding: 0.1em;
     margin: clamp(0em, 5vw, 0.2em);
     border-radius: 6px;
-  }
 
-  #show-menu :global(.material-symbols-rounded) {
-    /* Symbol */
-    font-size: clamp(1.5em, 10vw, 2em);
-  }
+    :global(.material-symbols-rounded) {
+      /* Symbol */
+      font-size: clamp(1.5em, 10vw, 2em);
+    }
 
-  #show-menu:hover {
-    background-color: var(--color-bg-2);
-  }
+    &:hover {
+      background-color: var(--color-bg-2);
+    }
 
-  #show-menu.active {
-    background-color: var(--color-bg-alt);
+    &.active {
+      background-color: var(--color-bg-alt);
+    }
   }
 
   :global(#more-menu) {
@@ -510,84 +548,44 @@
     max-width: clamp(80px, 25vw, 200px);
     box-sizing: border-box;
     z-index: 1;
-  }
 
-  :global(#more-menu) h5 {
-    margin: calc(var(--padding) * 1.5) 0.15em;
-    margin-top: var(--padding);
-    font-size: 1em;
-    font-weight: 600;
-  }
+    @media (max-width: 250px) {
+      --padding: 0.1em;
+      margin: -0.15em 0.15em;
+    }
 
-  :global(#more-menu) ul {
-    display: flex;
-    flex-direction: column;
-    gap: calc(var(--padding) * 1.5);
-  }
+    h5 {
+      margin: calc(var(--padding) * 1.5) 0.15em;
+      margin-top: var(--padding);
+      font-size: 1em;
+      font-weight: 600;
+    }
 
-  :global(#more-menu) li {
-    margin: 0;
-  }
+    ul {
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--padding) * 1.5);
+    }
 
-  :global(#more-menu) li > button {
-    width: 100%;
-    text-align: left;
-    vertical-align: middle;
-    padding: var(--padding);
-  }
+    li {
+      margin: 0;
+    }
 
-  :global(#more-menu) li > button > :global(.material-symbols-rounded) {
-    vertical-align: text-bottom;
+    li > button {
+      width: 100%;
+      text-align: left;
+      vertical-align: middle;
+      padding: var(--padding);
+    }
+
+    li > button > :global(.material-symbols-rounded) {
+      vertical-align: text-bottom;
+    }
   }
 
   footer {
     position: sticky;
     bottom: 0;
     background-color: var(--color-bg);
-  }
-
-  @media (max-width: 250px) {
-    header h3 .guild {
-      display: none;
-    }
-
-    #message-input aside {
-      /* No more avatar to vertically align to. */
-      width: auto;
-    }
-
-    #file-list ul {
-      margin-top: 0.25em;
-    }
-
-    #file-list li {
-      margin: 0 0.5em;
-      font-size: 0.95em;
-    }
-
-    #file-list li .remove {
-      padding: 0.15em;
-      margin: 0;
-      float: right;
-    }
-
-    #file-list li > :global(.material-symbols-rounded) {
-      display: none;
-    }
-
-    :global(#more-menu) {
-      --padding: 0.1em;
-      margin: -0.15em 0.15em;
-    }
-  }
-
-  @media (min-width: 451px) {
-    header .menu {
-      display: none;
-    }
-
-    header h3 {
-      margin-left: 0.5em;
-    }
   }
 </style>

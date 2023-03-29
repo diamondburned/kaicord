@@ -1,0 +1,20 @@
+// https://projectblurple.com/
+$color-force: #7289da;
+$color-blossom: lighten($color-force, 20%);
+$color-fade: $color-force;
+
+$color-bg: #23272a;
+$color-bg-2: #1e2124;
+$color-bg-alt: #444856;
+
+$color-text: #ffffff;
+$font-size-base: 1.8rem;
+
+$font-family-base: "Source Sans Pro", "Helvetica Neue", sans-serif;
+$font-family-heading: $font-family-base;
+
+// Begin KaiOS layout at about 450px width or less.
+$kaios-width: 450px;
+
+// Begin a very tiny layout at about 250px or less.
+$tiny-width: 250px;

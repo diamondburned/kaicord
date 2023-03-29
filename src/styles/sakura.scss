@@ -1,18 +1,4 @@
-// https://projectblurple.com/
-$color-force: #7289da;
-$color-blossom: lighten($color-force, 20%);
-$color-fade: $color-force;
-
-$color-bg: #23272a;
-$color-bg-2: #1e2124;
-$color-bg-alt: #444856;
-
-$color-text: #ffffff;
-$font-size-base: 1.8rem;
-
-$font-family-base: "Source Sans Pro", "Helvetica Neue", sans-serif;
-$font-family-heading: $font-family-base;
-
+@import "./variables.scss";
 @import "normalize.css";
 @import "sakura.css/scss/main";
 

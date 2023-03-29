@@ -75,42 +75,76 @@
   </div>
 </section>
 
-<style>
+<style lang="scss">
   .message {
     display: grid;
     grid-template-columns: auto 1fr;
     grid-template-rows: auto auto;
     align-items: flex-start;
     margin: 0;
-  }
 
-  .message > aside {
-    grid-area: 1/ 1/ 3/ 2;
-  }
-  .message > .header {
-    grid-area: 1/ 2/ 2/ 3;
-  }
-  .message > .body {
-    grid-area: 2/ 2/ 3/ 3;
-  }
+    &.sending {
+      opacity: 0.45;
+    }
 
-  .message.sending {
-    opacity: 0.45;
-  }
+    &.compact {
+      padding-top: 0.25em;
+      margin-left: 3.5em;
+    }
 
-  .message > aside {
-    margin-top: 0.25em;
-    text-align: center;
-    width: 3.5em;
-  }
+    &:not(.compact) {
+      padding-top: 0.5em;
+    }
 
-  .message:not(.compact) {
-    padding-top: 0.5em;
-  }
+    & > aside {
+      grid-area: 1/ 1/ 3/ 2;
+    }
 
-  .message.compact {
-    padding-top: 0.25em;
-    margin-left: 3.5em;
+    & > .header {
+      grid-area: 1/ 2/ 2/ 3;
+    }
+
+    & > .body {
+      grid-area: 2/ 2/ 3/ 3;
+    }
+
+    @media (max-width: $tiny-width) {
+      &.compact {
+        margin-left: 0;
+      }
+
+      & > aside {
+        grid-area: 1 / 1 / 2 / 2;
+      }
+
+      & > .header {
+        grid-area: 1/ 2/ 2/ 3;
+      }
+
+      & > .body {
+        grid-area: 2/ 1/ 3/ 3;
+      }
+    }
+
+    aside {
+      margin-top: 0.25em;
+      text-align: center;
+      width: 3.5em;
+
+      @media (max-width: $tiny-width) {
+        width: auto;
+        margin: 0 0.5em;
+        margin-right: 0.35em;
+
+        /* Icon */
+        & > :global(*) {
+          width: 1.5em;
+          height: 1.5em;
+          margin-bottom: -0.1em;
+          vertical-align: top;
+        }
+      }
+    }
   }
 
   .header {
@@ -122,81 +156,51 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-  }
 
-  .header * {
-    margin: 0;
-  }
+    * {
+      margin: 0;
+    }
 
-  .header .author {
-    font-size: 0.95em;
-    font-weight: 600;
-    color: var(--role-color);
-  }
+    .author {
+      font-size: 0.95em;
+      font-weight: 600;
+      color: var(--role-color);
+    }
 
-  .header .timestamp {
-    font-size: 0.8em;
-    opacity: 0.85;
+    .timestamp {
+      font-size: 0.8em;
+      opacity: 0.85;
+    }
   }
 
   .body {
     margin-right: 0.5em;
-  }
 
-  .body p {
-    margin: 0;
-    line-height: 1.35em;
-    overflow: hidden;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-
-  .info,
-  .edited {
-    font-size: 0.85em;
-    opacity: 0.85;
-  }
-
-  .info {
-    font-style: italic;
-  }
-
-  .error {
-    font-size: 0.85em;
-    color: var(--color-error);
-  }
-
-  @media (max-width: 250px) {
-    .message > aside {
-      grid-area: 1 / 1 / 2 / 2;
-    }
-    .message > .header {
-      grid-area: 1/ 2/ 2/ 3;
-    }
-    .message > .body {
-      grid-area: 2/ 1/ 3/ 3;
-    }
-
-    .message > aside {
-      width: auto;
+    @media (max-width: $tiny-width) {
       margin: 0 0.5em;
-      margin-right: 0.35em;
     }
 
-    /* Icon */
-    .message > aside > :global(*) {
-      width: 1.5em;
-      height: 1.5em;
-      margin-bottom: -0.1em;
-      vertical-align: top;
+    p {
+      margin: 0;
+      line-height: 1.35em;
+      overflow: hidden;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
-    .message.compact {
-      margin-left: 0;
+    .info,
+    .edited {
+      font-size: 0.85em;
+      opacity: 0.85;
     }
 
-    .message .body {
-      margin: 0 0.5em;
+    .info {
+      font-style: italic;
+    }
+
+    .error {
+      font-size: 0.85em;
+      color: var(--color-error);
     }
   }
 </style>

@@ -1,6 +1,4 @@
 <script lang="ts">
-  import "#/sakura.scss";
-
   import TextualHRule from "#/components/TextualHRule.svelte";
   import Loading from "#/components/Loading.svelte";
   import QRLogin from "#/pages/Login/QRLogin.svelte";

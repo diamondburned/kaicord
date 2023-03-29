@@ -1,6 +1,4 @@
 <script lang="ts">
-  import "#/sakura.scss";
-
   import * as local from "#/lib/local.js";
   import * as search from "#/lib/discord/search.js";
   import * as discord from "#/lib/discord/discord.js";
@@ -112,13 +110,19 @@
   </main>
 </div>
 
-<style>
+<style lang="scss">
   .container {
     --header-height: clamp(2.5em, 10vh, 3em);
     display: flex;
     width: calc(100%);
     height: calc(100%);
     overflow: hidden;
+
+    @media (max-width: $kaios-width) {
+      &.sidebar-open #sidebar {
+        left: 0;
+      }
+    }
   }
 
   #sidebar {
@@ -130,13 +134,21 @@
     background-color: var(--color-bg-2);
     z-index: 2;
     overflow: auto;
-  }
 
-  #sidebar > *:not(nav) {
-    /* Hack to make Svelte transitions work for this case.
+    @media (max-width: $kaios-width) {
+      width: 100%;
+      border-right: none;
+      left: -100%;
+      position: absolute;
+      transition: left 150ms ease;
+    }
+
+    & > *:not(nav) {
+      /* Hack to make Svelte transitions work for this case.
 	   Taken from https://svelte.dev/repl/18c5847e8f104fa1b161c54598ec3996 */
-    grid-column: 1/2;
-    grid-row: 2/3;
+      grid-column: 1/2;
+      grid-row: 2/3;
+    }
   }
 
   #search {
@@ -194,19 +206,5 @@
     opacity: 0.85;
     font-size: 0.85em;
     text-align: center;
-  }
-
-  @media (max-width: 450px) {
-    #sidebar {
-      width: 100%;
-      border-right: none;
-      left: -100%;
-      position: absolute;
-      transition: left 150ms ease;
-    }
-
-    .container.sidebar-open #sidebar {
-      left: 0;
-    }
   }
 </style>

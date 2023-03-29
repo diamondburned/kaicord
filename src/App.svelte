@@ -1,5 +1,5 @@
 <script lang="ts">
-  import "#/sakura.scss";
+  import "#/styles/sakura.scss";
 
   import Chat from "#/pages/Chat/Chat.svelte";
   import Login from "#/pages/Login/Login.svelte";
