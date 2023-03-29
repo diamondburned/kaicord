@@ -9,17 +9,15 @@
   import { connected } from "#/lib/local.js";
 </script>
 
-<SoftKeyNavigable>
-  {#if $connected}
-    <div transition:fade={{ duration: 100 }}>
-      <Chat />
-    </div>
-  {:else}
-    <div transition:fade={{ duration: 100 }}>
-      <Login />
-    </div>
-  {/if}
-</SoftKeyNavigable>
+{#if $connected}
+  <div transition:fade={{ duration: 100 }}>
+    <Chat />
+  </div>
+{:else}
+  <div transition:fade={{ duration: 100 }}>
+    <Login />
+  </div>
+{/if}
 
 <style>
   div {

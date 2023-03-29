@@ -22,6 +22,7 @@
   import * as svelte from "svelte";
 
   import SoftKeys from "#/components/SoftKeys.svelte";
+  import { height } from "#/components/SoftKeys.svelte";
 
   let keys = store.writable<Keys>({});
   svelte.setContext(ctx, keys);
@@ -38,6 +39,7 @@
   <slot />
 </div>
 
+<div class="phantom-softkeys" style="--height: {height}" />
 <SoftKeys
   left={$keys.left?.label}
   center={$keys.center?.label}
@@ -46,7 +48,11 @@
 />
 
 <style>
-  div {
+  div.softkeyable {
     display: contents;
+  }
+
+  div.phantom-softkeys {
+    height: var(--height);
   }
 </style>

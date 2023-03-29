@@ -1,5 +1,6 @@
 <script lang="ts" context="module">
   export type SoftKey = "left" | "center" | "right";
+  export const height = "2em";
 </script>
 
 <script lang="ts">
@@ -9,6 +10,7 @@
   export let center: string | undefined = undefined;
   export let right: string | undefined = undefined;
   $: empty = !left && !center && !right;
+  $: keys = { left, center, right };
 
   const dispatch = svelte.createEventDispatcher<{ press: SoftKey }>();
   let self: HTMLElement | undefined;
@@ -38,35 +40,23 @@
 
 <svelte:document on:keydown={onKeyDown} />
 
-<footer id="softkeys" class:empty bind:this={self}>
-  <div id="softkey-left">
-    {#if left}
-      <button class="flat" on:click={() => dispatch("press", "left")}>
-        {left}
-      </button>
-    {/if}
-  </div>
-  <div id="softkey-center">
-    {#if center}
-      <button class="flat" on:click={() => dispatch("press", "center")}>
-        {center}
-      </button>
-    {/if}
-  </div>
-  <div id="softkey-right">
-    {#if right}
-      <button class="flat" on:click={() => dispatch("press", "right")}>
-        {right}
-      </button>
-    {/if}
-  </div>
+<footer id="softkeys" class:empty bind:this={self} style="--height: {height}">
+  {#each ["left", "center", "right"] as key}
+    <div id="softkey-{key}">
+      {#if keys[key]}
+        <button class="flat" on:click={() => dispatch("press", key)}>
+          {keys[key]}
+        </button>
+      {/if}
+    </div>
+  {/each}
 </footer>
 
 <style lang="scss">
   #softkeys {
-    position: sticky;
+    position: fixed;
     bottom: 0;
-    height: 2em;
+    height: var(--height);
     width: 100%;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
