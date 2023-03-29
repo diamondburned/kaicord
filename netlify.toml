@@ -3,3 +3,9 @@
   for = "/manifest.webmanifest"
   [headers.values]
     Access-Control-Allow-Origin = "*"
+
+[context.production]
+  command = "vite build --mode production"
+
+[context.branch-deploy]
+  command = "vite build --mode staging"
