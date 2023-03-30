@@ -70,8 +70,20 @@
     <ViewSwitcher id="sidebar-switcher" values={Object.values(Sidebar)} bind:value={sidebar} />
     {#if sidebar == Sidebar.Search}
       <div id="search" transition:fade|local={{ duration: 100 }}>
-        <input type="text" bind:value={searchInput} placeholder="Search channels..." />
-        <ChannelList channels={searchedChannels} selected={current} on:select={onSelectEvent} />
+        <input
+          type="text"
+          placeholder="Search channels..."
+          bind:value={searchInput}
+          on:focus={() => searcher.prepare()}
+        />
+        <ChannelList
+          channels={searchedChannels}
+          selected={current}
+          on:select={(event) => {
+            searchInput = "";
+            onSelectEvent(event);
+          }}
+        />
       </div>
     {:else if sidebar == Sidebar.Inbox}
       <div id="inbox" transition:fade|local={{ duration: 100 }}>

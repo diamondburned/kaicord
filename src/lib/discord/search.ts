@@ -1,14 +1,26 @@
-import * as fuzzy from "fuzzy";
+import * as fuzzy from "fast-fuzzy";
 import * as store from "svelte/store";
 import * as state from "#/lib/discord/state.js";
 import * as discord from "#/lib/discord/discord.js";
 
+type channelItem = {
+  channel: discord.Channel;
+  string: string;
+};
+
+type channelSearcher = {
+  searcher: fuzzy.Searcher<channelItem, fuzzy.FullOptions<channelItem>>;
+  timeoutHandle: number;
+};
+
 export class ChannelSearcher {
+  private searcher?: channelSearcher;
+
   constructor(
     public readonly state: store.Writable<discord.State>,
     // threshold is the minimum score a fuzzy match must have to be included in
     // the results.
-    public readonly threshold = 0.05,
+    public readonly threshold = 0.6,
     // limit is the maximum number of results to return.
     public readonly limit = 35
   ) {}
@@ -18,99 +30,84 @@ export class ChannelSearcher {
       return [];
     }
 
-    // TODO: implement dynamic searching: if previous input is a suffix of the
-    // current input, only search the channels that were previously returned.
+    const searcher = this.buildSearcher();
+    return searcher
+      .search(input)
+      .slice(0, this.limit)
+      .map((item) => item.channel);
+  }
 
-    const state = store.get(this.state);
-    const matches: (discord.Channel & { _score: number })[] = [];
+  prepare() {
+    this.buildSearcher();
+  }
 
-    const addMatch = (channel: discord.Channel, result: fuzzy.MatchResult) => {
-      if (result.score < this.threshold) {
-        return;
+  private static fuzzyChannelItem(channel: discord.Channel, guild?: discord.Guild): channelItem {
+    switch (channel.type) {
+      case discord.ChannelType.DirectMessage:
+      case discord.ChannelType.GroupDM: {
+        const recipients = store.get(channel.recipients);
+        return {
+          channel,
+          string: (channel.name ?? "") + " " + recipients.map((u) => u.username).join(" "),
+        };
       }
-
-      if (matches.length < this.limit) {
-        console.debug(
-          "search: adding match",
-          result.rendered,
-          result.score,
-          "since matches.length < this.limit"
-        );
-        matches.push({ ...channel, _score: result.score });
-        return;
+      default: {
+        if (!guild) guild = store.get(channel.guild);
+        return {
+          channel,
+          string: `${guild.name} ${channel.name}`,
+        };
       }
+    }
+  }
 
-      // Jesus fuck, Copilot. I'm so glad I didn't have to write this.
-      const worst = matches.reduce(
-        (worst, match) => (match._score < worst._score ? match : worst),
-        matches[0]
-      );
-      if (result.score > worst._score) {
-        console.debug(
-          "search: adding match",
-          result.rendered,
-          result.score,
-          "since score > worst._score"
-        );
-        matches[matches.indexOf(worst)] = { ...channel, _score: result.score };
-      }
+  private buildSearcher(): channelSearcher["searcher"] {
+    if (this.searcher) {
+      clearInterval(this.searcher.timeoutHandle);
+    } else {
+      const state = store.get(this.state);
+      const channels: channelItem[] = [];
 
-      console.debug(
-        "search: not adding match",
-        result.rendered,
-        result.score,
-        "since score <= worst._score"
-      );
-    };
+      for (const [_, guild] of state.guilds) {
+        for (const [_, channel] of guild.channels) {
+          switch (channel.type) {
+            case discord.ChannelType.DirectMessage:
+            case discord.ChannelType.GroupDM:
+              continue;
+          }
 
-    for (const [_, guild] of state.guilds) {
-      for (const [_, channel] of guild.channels) {
-        switch (channel.type) {
-          case discord.ChannelType.DirectMessage:
-          case discord.ChannelType.GroupDM:
+          if (!discord.TextChannelTypes.has(channel.type)) {
             continue;
-        }
+          }
 
-        if (!discord.TextChannelTypes.has(channel.type)) {
-          continue;
-        }
-
-        const match = fuzzy.match(input, `${guild.name} ${channel.name}`);
-        if (match) {
-          addMatch(channel, match);
-        }
-
-        if (channel.threads) {
-          for (const [_, thread] of channel.threads) {
-            const match = fuzzy.match(input, `${guild.name} ${thread.name}`);
-            if (match) {
-              addMatch(thread, match);
+          channels.push(ChannelSearcher.fuzzyChannelItem(channel, guild));
+          if (channel.threads) {
+            for (const [_, thread] of channel.threads) {
+              channels.push(ChannelSearcher.fuzzyChannelItem(thread, guild));
             }
           }
         }
       }
+
+      for (const [_, channel] of state.privateChannels) {
+        if (!discord.TextChannelTypes.has(channel.type)) {
+          continue;
+        }
+        channels.push(ChannelSearcher.fuzzyChannelItem(channel));
+      }
+
+      const searcher = new fuzzy.Searcher(channels, {
+        keySelector: (item) => item.string,
+        threshold: this.threshold,
+      });
+
+      this.searcher = {
+        searcher,
+        timeoutHandle: 0,
+      };
     }
 
-    for (const [_, channel] of state.privateChannels) {
-      if (!discord.TextChannelTypes.has(channel.type)) {
-        continue;
-      }
-
-      let name = channel.name ?? "";
-      switch (channel.type) {
-        case discord.ChannelType.DirectMessage:
-        case discord.ChannelType.GroupDM:
-          const recipients = store.get(channel.recipients);
-          name += " " + recipients.map((u) => u.username).join(" ");
-      }
-
-      const match = fuzzy.match(input, name);
-      if (match) {
-        addMatch(channel, match);
-      }
-    }
-
-    matches.sort((a, b) => b._score - a._score);
-    return matches;
+    this.searcher.timeoutHandle = window.setInterval(() => (this.searcher = undefined), 30 * 1000);
+    return this.searcher.searcher;
   }
 }
