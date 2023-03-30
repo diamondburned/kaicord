@@ -51,6 +51,16 @@
       return;
     }
 
+    if (document.activeElement) {
+      const elem = document.activeElement as HTMLInputElement;
+      if (elem.value) {
+        // Assume that the user is typing in a text field. Funny coincidence:
+        // this check fails if the input is empty, but then the user would not
+        // be needing arrow keys to move around the input anyway.
+        return;
+      }
+    }
+
     switch (event.key) {
       case "ArrowLeft":
         value = cycler(values, value, "left");
