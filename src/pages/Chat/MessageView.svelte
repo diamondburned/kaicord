@@ -367,7 +367,6 @@
   .menu {
     color: var(--color-text);
     background-color: transparent;
-    height: 100%;
     border: none;
     display: flex;
     align-items: center;
@@ -562,7 +561,7 @@
 
     @media (max-width: $tiny-width) {
       --padding: 0.1em;
-      margin: -0.15em 0.15em;
+      margin: -0.1em 0.15em;
     }
 
     h5 {

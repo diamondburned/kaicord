@@ -153,9 +153,13 @@
     align-items: baseline;
     margin: 0;
     gap: 0.25em;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+
+    &,
+    * {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
 
     * {
       margin: 0;
