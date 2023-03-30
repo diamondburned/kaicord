@@ -11,7 +11,6 @@
   import * as svelte from "svelte";
   import * as store from "svelte/store";
   import * as api from "#/lib/discord/api.js";
-  import * as state from "#/lib/discord/state.js";
   import * as discord from "#/lib/discord/discord.js";
   import session from "#/lib/local.js";
   import prettyBytes from "pretty-bytes";
@@ -194,6 +193,10 @@
 
   let showInputMenu = false;
   let attachmentInput: HTMLInputElement;
+
+  svelte.onMount(() => {
+    document.body.scrollIntoView(false);
+  });
 </script>
 
 <header>

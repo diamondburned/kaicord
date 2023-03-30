@@ -3,6 +3,7 @@
   import * as search from "#/lib/discord/search.js";
   import * as discord from "#/lib/discord/discord.js";
 
+  import BottomViewport from "#/components/BottomViewport.svelte";
   import ViewSwitcher from "#/components/ViewSwitcher.svelte";
   import ChannelList from "#/pages/Chat/ChannelList.svelte";
   import MessageView from "#/pages/Chat/MessageView.svelte";
@@ -119,9 +120,11 @@
     {/if}
   </aside>
 
-  <main id="chat">
-    <MessageView channel={current} on:menu={() => (sidebarForceOpen = true)} />
-  </main>
+  <BottomViewport>
+    <main id="chat">
+      <MessageView channel={current} on:menu={() => (sidebarForceOpen = true)} />
+    </main>
+  </BottomViewport>
 </div>
 
 <style lang="scss">
@@ -201,7 +204,6 @@
   #chat {
     flex: 1;
     display: flex;
-    overflow: auto;
     flex-direction: column;
   }
 
