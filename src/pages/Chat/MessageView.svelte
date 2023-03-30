@@ -442,22 +442,30 @@
       height: 2.15em;
       resize: none;
       margin: auto 0;
-      padding: 0.45em 0;
+      padding: 0.5em 0;
       padding-right: 0.25em;
       border: none;
       border-radius: 0;
       background: none;
       scrollbar-width: thin;
-    }
 
-    textarea.multiline {
-      height: 4.45em;
+      &.multiline {
+        height: 4.45em;
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+
+      @media (max-width: $tiny-width) {
+        &:focus {
+          margin-bottom: 2.5em;
+        }
+      }
     }
 
     aside {
       width: 3.5em;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
 
       @media (max-width: $tiny-width) {
