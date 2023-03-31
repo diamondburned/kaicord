@@ -147,7 +147,7 @@
     display: grid;
     grid-template-rows: auto 1fr;
     min-height: 100%;
-    width: clamp(12em, 25%, 300px);
+    width: clamp(300px, 25%, 400px);
     border-right: 1px solid var(--color-bg-alt);
     background-color: var(--color-bg-2);
     z-index: 2;
