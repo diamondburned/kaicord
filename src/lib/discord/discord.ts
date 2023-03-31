@@ -108,13 +108,8 @@ export type Message = {
   content: string;
   timestamp: Date;
   editedTimestamp?: Date;
-  attachments: {
-    id: ID;
-    filename: string;
-    size: number;
-    url: string;
-    proxyURL: string;
-  }[];
+  attachments: Attachment[];
+  embeds: Embed[];
   reference?:
     | Message
     | {
@@ -132,6 +127,64 @@ export type Message = {
       guild: store.Readable<Guild>;
     }
 );
+
+export type Attachment = {
+  id: ID;
+  filename: string;
+  description?: string;
+  type?: string;
+  size: number;
+  url: string;
+  proxyURL: string;
+  width?: number;
+  height?: number;
+};
+
+export type Embed = Partial<{
+  title: string;
+  type: "rich" | "image" | "video" | "gifv" | "article" | "link";
+  description: string;
+  url: string;
+  timestamp: string;
+  footer: {
+    text: string;
+    iconURL?: string;
+    proxyIconURL?: string;
+  };
+  image: {
+    url: string;
+    proxyURL: string;
+    height?: number;
+    width?: number;
+  };
+  thumbnail: {
+    url?: string;
+    proxyURL?: string;
+    height?: number;
+    width?: number;
+  };
+  video: {
+    url: string;
+    proxyURL?: string;
+    height: number;
+    width: number;
+  };
+  provider: {
+    name: string;
+    url: string;
+  };
+  author: {
+    name?: string;
+    url?: string;
+    iconURL?: string;
+    proxyIconURL?: string;
+  };
+  fields: {
+    name: string;
+    value: string;
+    inline?: boolean;
+  }[];
+}>;
 
 export enum MessageType {
   DefaultMessage,

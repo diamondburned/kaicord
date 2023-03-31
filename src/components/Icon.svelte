@@ -33,7 +33,7 @@
   </div>
 {/if}
 
-<style>
+<style lang="scss">
   .icon {
     --size: 2.25em;
 
@@ -44,29 +44,29 @@
     border-radius: 100px;
     user-select: none;
     object-fit: contain;
-  }
 
-  .icon.inline {
-    --size: 1.5em;
+    &.inline {
+      --size: 1.5em;
 
-    vertical-align: bottom;
-    display: inline-flex;
-  }
+      vertical-align: bottom;
+      display: inline-flex;
+    }
 
-  .icon.emoji {
-    border-radius: 0;
+    &.emoji {
+      border-radius: 0;
+    }
   }
 
   div.icon {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--color-bg-alt);
-  }
+    background-color: #{lighten($color-bg-alt, 10%)};
 
-  div.icon p {
-    font-size: 1.5em;
-    margin: 0;
-    color: var(--color-blossom);
+    p {
+      font-size: 1.5em;
+      margin: 0;
+      color: var(--color-blossom);
+    }
   }
 </style>

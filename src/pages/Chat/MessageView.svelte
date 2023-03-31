@@ -7,6 +7,7 @@
 
   import { SendingMessage, RegularMessage } from "#/pages/Chat/Message.svelte";
   import { channelIcon } from "#/pages/Chat/Channel.svelte";
+  import { mimeIcon } from "#/components/discord/Attachment.svelte";
 
   import * as svelte from "svelte";
   import * as store from "svelte/store";
@@ -164,21 +165,6 @@
       // TODO
     },
   });
-
-  function mimeIcon(mimeType: string): string {
-    switch (mimeType.split("/")[0]) {
-      case "image":
-        return "image";
-      case "video":
-        return "movie";
-      case "audio":
-        return "audiotrack";
-      case "application":
-        return "widgets";
-      default:
-        return "attachment";
-    }
-  }
 
   function onInputKeyDown(event: KeyboardEvent) {
     console.log("textarea key down", event);

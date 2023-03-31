@@ -123,13 +123,17 @@ export type Message = {
   attachments?: {
     id: string;
     filename: string;
+    description?: string;
+    content_type?: string;
     size: number;
     url: string;
     proxy_url: string;
+    width?: number;
+    height?: number;
   }[];
   embeds?: Partial<{
     title: string;
-    type: "rich" | "image" | "video" | "gifv" | "article" | "link";
+    type: string;
     description: string;
     url: string;
     timestamp: string;

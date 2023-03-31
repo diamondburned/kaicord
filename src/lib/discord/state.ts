@@ -108,10 +108,45 @@ export function convertPrivateChannel(
   }
 }
 
-export function convertAttachment(attachment: NonNullable<api.Message["attachments"]>[number]) {
+export function convertAttachment(
+  attachment: NonNullable<api.Message["attachments"]>[number]
+): discord.Attachment {
   return {
     ...attachment,
+    type: attachment.content_type,
     proxyURL: attachment.proxy_url,
+  };
+}
+
+export function convertEmbed(embed: NonNullable<api.Message["embeds"]>[number]): discord.Embed {
+  function convertObject<T extends any>(obj: Record<string, any>): T {
+    const dst = { ...obj };
+    for (const [k, v] of Object.entries(obj)) {
+      switch (k) {
+        case "icon_url":
+          dst["iconURL"] = v;
+          break;
+        case "proxy_url":
+          dst["proxyURL"] = v;
+          break;
+        case "proxy_icon_url":
+          dst["proxyIconURL"] = v;
+          break;
+      }
+    }
+    return dst as T;
+  }
+
+  return {
+    ...embed,
+    type: embed.type as discord.Embed["type"],
+    footer: embed.footer ? convertObject(embed.footer) : undefined,
+    image: embed.image ? convertObject(embed.image) : undefined,
+    thumbnail: embed.thumbnail ? convertObject(embed.thumbnail) : undefined,
+    video: embed.video ? convertObject(embed.video) : undefined,
+    provider: embed.provider ? convertObject(embed.provider) : undefined,
+    author: embed.author ? convertObject(embed.author) : undefined,
+    fields: embed.fields ? embed.fields.map((field) => convertObject(field)) : undefined,
   };
 }
 
@@ -131,9 +166,10 @@ export function convertChannelMessage(state: StateStore, message: api.Message): 
       ? convertTimestamp(message.edited_timestamp)
       : undefined,
     attachments: (message.attachments ?? []).map(convertAttachment),
+    embeds: (message.embeds ?? []).map(convertEmbed),
     reference: message.referenced_message
-      ? // I wonder if this could cause a stack overflow by having cyclic message
-        // references.
+      ? // I wonder if this could cause a stack overflow by having cyclic
+        // message references.
         convertChannelMessage(state, message.referenced_message)
       : message.message_reference
       ? {

@@ -51,7 +51,6 @@ export default defineConfig((env) => {
             prependData: `@import "${path.resolve(__dirname, "./src/styles/variables.scss")}";`,
           },
         }),
-      }),
     ],
     worker: {
       format: "iife",

@@ -18,6 +18,7 @@
   import { state } from "#/lib/local.js";
 
   import Icon from "#/components/Icon.svelte";
+  import Attachment from "#/components/discord/Attachment.svelte";
   import MarkdownContent from "#/components/discord/MarkdownContent.svelte";
 
   export let message: Message;
@@ -74,18 +75,27 @@
     </p>
   {/if}
   <div class="body">
-    <p class="text">
-      {#if message.content}
-        <MarkdownContent state={$state} content={message.content} {guildID} />
-      {:else}
-        <span class="info">No content</span>
-      {/if}
-      {#if !message.sending && message.editedTimestamp}
-        <time class="edited" datetime={message.editedTimestamp.toISOString()}> (edited) </time>
-      {/if}
-    </p>
+    {#if message.content || (!message.sending && message.editedTimestamp)}
+      <p class="text">
+        {#if message.content}
+          <MarkdownContent state={$state} content={message.content} {guildID} />
+        {/if}
+        {#if !message.sending && message.editedTimestamp}
+          <time class="edited" datetime={message.editedTimestamp.toISOString()}> (edited) </time>
+        {/if}
+      </p>
+    {/if}
     {#if message.sending && message.error}
       <p class="error">{message.error}</p>
+    {/if}
+    {#if !message.sending}
+      {#if message.attachments}
+        <div class="attachments">
+          {#each message.attachments as attachment}
+            <Attachment {attachment} />
+          {/each}
+        </div>
+      {/if}
     {/if}
   </div>
 </section>
@@ -195,6 +205,7 @@
   .body {
     margin-right: 0.5em;
     margin-top: auto;
+    overflow: hidden;
 
     @media (max-width: $tiny-width) {
       margin: 0 0.5em;
@@ -221,6 +232,10 @@
     .error {
       font-size: 0.85em;
       color: var(--color-error);
+    }
+
+    .attachments > :global(*) {
+      margin-top: 0.5em;
     }
   }
 </style>
