@@ -230,7 +230,7 @@
   {:then}
     <div id="messages">
       {#each $messages as message, i}
-        <Message {message} compact={shouldBeCompact($messages, i)} />
+        <Message {message} {channel} compact={shouldBeCompact($messages, i)} />
       {/each}
     </div>
   {/await}

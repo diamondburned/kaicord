@@ -1,4 +1,5 @@
 <script lang="ts">
+  import * as store from "svelte/store";
   import * as local from "#/lib/local.js";
   import * as search from "#/lib/discord/search.js";
   import * as discord from "#/lib/discord/discord.js";
@@ -58,7 +59,7 @@
     const s = $session;
     if (s) {
       recentChannels = $trackedRecents
-        .map((recent) => s.channel(recent.id))
+        .map((recent) => store.get(s.channel(recent.id)))
         .filter((ch) => ch !== null) as discord.Channel[];
     } else {
       recentChannels = [];

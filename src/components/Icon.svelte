@@ -4,10 +4,11 @@
   export let name: string;
   export let inline = false;
   export let avatar = false;
+  export let emoji = false;
 
   export let url = "";
   export let symbol = "";
-  export let size = inline ? "1.5em" : "2.25em";
+  export let size: string | null = null;
 
   $: alt = avatar ? `${name} avatar` : `${name} icon`;
 
@@ -21,30 +22,39 @@
 </script>
 
 {#if url}
-  <img class="icon" class:inline src={url} {alt} style="--size: {size}" />
+  <img class="icon" class:inline class:avatar class:emoji src={url} {alt} style="--size: {size}" />
 {:else if symbol}
-  <div class="icon" class:inline aria-label={alt} style="--size: {size}">
+  <div class="icon" class:inline class:avatar class:emoji aria-label={alt} style="--size: {size}">
     <Symbol name={symbol} />
   </div>
 {:else}
-  <div class="icon" class:inline aria-label={alt} style="--size: {size}">
+  <div class="icon" class:inline class:avatar class:emoji aria-label={alt} style="--size: {size}">
     <p>{initials(name)}</p>
   </div>
 {/if}
 
 <style>
   .icon {
+    --size: 2.25em;
+
     width: var(--size);
     height: var(--size);
     margin: 0;
     aspect-ratio: 1/1;
     border-radius: 100px;
     user-select: none;
+    object-fit: contain;
   }
 
   .icon.inline {
-    vertical-align: top;
+    --size: 1.5em;
+
+    vertical-align: bottom;
     display: inline-flex;
+  }
+
+  .icon.emoji {
+    border-radius: 0;
   }
 
   div.icon {

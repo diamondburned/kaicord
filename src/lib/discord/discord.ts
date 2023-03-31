@@ -228,3 +228,20 @@ export function channelName(channel: Channel, hash = true): string {
 export function hexColor(color: number): string {
   return "#" + color.toString(16).padStart(6, "0");
 }
+
+export function rolesColor(roles: GuildRole[], { rgb }: { rgb: boolean } = { rgb: false }): string {
+  roles.sort((a, b) => b.position - a.position);
+  const role = roles.find((role) => role.color !== 0);
+  if (!role) {
+    return "";
+  }
+
+  if (rgb) {
+    const r = (role.color >> 16) & 0xff;
+    const g = (role.color >> 8) & 0xff;
+    const b = role.color & 0xff;
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  return `#${role.color.toString(16).padStart(6, "0")}`;
+}

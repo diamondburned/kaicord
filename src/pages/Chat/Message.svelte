@@ -15,21 +15,32 @@
 </script>
 
 <script lang="ts">
+  import { state } from "#/lib/local.js";
+
   import Icon from "#/components/Icon.svelte";
+  import MarkdownContent from "#/components/discord/MarkdownContent.svelte";
 
   export let message: Message;
+  export let channel: discord.Channel;
   export let compact: boolean = false;
 
   // Workaround for Svelte limitation.
   $: author = message.author;
   $: roles = $author.guild ? $author.roles : null;
-  $: color = roles && $roles ? rolesColor($roles) : 0;
+  $: color = roles && $roles ? discord.rolesColor($roles) : "";
   $: id = message.sending ? undefined : message.id;
 
-  function rolesColor(roles: discord.GuildRole[]): string {
-    roles.sort((a, b) => b.position - a.position);
-    const role = roles.find((role) => role.color !== 0);
-    return role ? `#${role.color.toString(16).padStart(6, "0")}` : "";
+  let guildID: discord.ID | undefined;
+  $: {
+    switch (channel.type) {
+      case discord.ChannelType.DirectMessage:
+      case discord.ChannelType.GroupDM:
+        guildID = undefined;
+        break;
+      default:
+        guildID = store.get(channel.guild).id;
+        break;
+    }
   }
 </script>
 
@@ -39,7 +50,11 @@
       <Icon url={discord.userAvatar($author)} name={$author.username} avatar={true} />
     </aside>
     <p class="header">
-      <span class="author" title={$author.username} style="--role-color: {color}">
+      <span
+        class="author"
+        title="{$author.username}#{$author.discriminator}"
+        style="--role-color: {color}"
+      >
         {#if $author.guild && $author.nick}
           {$author.nick}
         {:else}
@@ -61,7 +76,7 @@
   <div class="body">
     <p class="text">
       {#if message.content}
-        {message.content}
+        <MarkdownContent state={$state} content={message.content} {guildID} />
       {:else}
         <span class="info">No content</span>
       {/if}
@@ -82,14 +97,17 @@
     grid-template-rows: auto auto;
     align-items: flex-start;
     margin: 0;
+    padding-top: 0.25em;
 
     &.sending {
       opacity: 0.45;
     }
 
     &.compact {
-      padding-top: 0.25em;
       margin-left: 3.5em;
+      @media (max-width: $tiny-width) {
+        margin-left: 0;
+      }
     }
 
     &:not(.compact) {
@@ -109,10 +127,6 @@
     }
 
     @media (max-width: $tiny-width) {
-      &.compact {
-        margin-left: 0;
-      }
-
       & > aside {
         grid-area: 1 / 1 / 2 / 2;
       }
@@ -127,14 +141,13 @@
     }
 
     aside {
-      margin-top: 0.25em;
       text-align: center;
       width: 3.5em;
 
       @media (max-width: $tiny-width) {
         width: auto;
         margin: 0 0.5em;
-        margin-right: 0.35em;
+        margin-right: 0.25em;
 
         /* Icon */
         & > :global(*) {
@@ -152,7 +165,9 @@
     flex-direction: row;
     align-items: baseline;
     margin: 0;
+    margin-top: 0.1em;
     gap: 0.25em;
+    line-height: 1.25em;
 
     &,
     * {
@@ -179,6 +194,7 @@
 
   .body {
     margin-right: 0.5em;
+    margin-top: auto;
 
     @media (max-width: $tiny-width) {
       margin: 0 0.5em;
@@ -186,7 +202,7 @@
 
     p {
       margin: 0;
-      line-height: 1.35em;
+      line-height: 1.25em;
       overflow: hidden;
       white-space: pre-wrap;
       word-break: break-word;

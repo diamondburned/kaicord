@@ -108,7 +108,7 @@ export function convertPrivateChannel(
   }
 }
 
-export function convertAttachment(attachment: api.Message["attachments"][number]) {
+export function convertAttachment(attachment: NonNullable<api.Message["attachments"]>[number]) {
   return {
     ...attachment,
     proxyURL: attachment.proxy_url,
@@ -253,8 +253,8 @@ export class State extends gateway.Session implements StateStore {
     return this.state.subscribe(run, invalidate);
   }
 
-  channel(id: discord.ID): discord.Channel | null {
-    return stateChannel(store.get(this.state), id);
+  channel(id: discord.ID): store.Readable<discord.Channel | null> {
+    return store.derived(this.state, (state) => stateChannel(state, id));
   }
 
   // user gets the user with the given ID. If no user ID is given, the current
@@ -278,7 +278,8 @@ export class State extends gateway.Session implements StateStore {
     let list = this.chMessages.get(id);
     if (list) return list;
 
-    const channel = this.channel(id);
+    const channelStore = this.channel(id);
+    const channel = store.get(channelStore);
     if (!channel) {
       // weird, we requested messages from a channel we don't know about
       throw new Error(`unknown channel with ID ${id}`);

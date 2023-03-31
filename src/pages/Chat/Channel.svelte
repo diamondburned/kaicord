@@ -124,6 +124,8 @@
 
 <style lang="scss">
   .channel {
+    --bg: var(--color-bg-2);
+
     margin: 0;
     display: flex;
     align-items: center;
@@ -137,14 +139,15 @@
     width: 100%;
     text-align: left;
     color: var(--color-text);
+    background: var(--bg);
 
     &.selected {
-      background: var(--color-bg-alt);
+      --bg: var(--color-bg-alt);
     }
 
     &:hover,
     &:focus {
-      background: var(--color-bg);
+      --bg: var(--color-bg);
     }
 
     .name {
@@ -171,7 +174,7 @@
     & > :global(.icon:not(:first-child)) {
       width: 0.75em;
       height: 0.75em;
-      outline: 2px solid var(--color-bg-2);
+      outline: 2px solid var(--bg);
       position: absolute;
       bottom: 0;
       right: 0;
