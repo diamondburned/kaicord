@@ -261,7 +261,7 @@ export class State extends gateway.Session implements StateStore {
   constructor(
     public readonly client: api.Client,
     public readonly opts = {
-      messageLimit: 100,
+      messageLimit: 50,
       key: "gw_state",
     }
   ) {
