@@ -146,6 +146,7 @@ export type Embed = Partial<{
   description: string;
   url: string;
   timestamp: string;
+  color: number;
   footer: {
     text: string;
     iconURL?: string;

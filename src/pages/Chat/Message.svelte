@@ -18,6 +18,7 @@
   import { state } from "#/lib/local.js";
 
   import Icon from "#/components/Icon.svelte";
+  import Embed from "#/components/discord/Embed.svelte";
   import Attachment from "#/components/discord/Attachment.svelte";
   import MarkdownContent from "#/components/discord/MarkdownContent.svelte";
 
@@ -89,10 +90,17 @@
       <p class="error">{message.error}</p>
     {/if}
     {#if !message.sending}
-      {#if message.attachments}
+      {#if message.attachments.length > 0}
         <div class="attachments">
           {#each message.attachments as attachment}
             <Attachment {attachment} />
+          {/each}
+        </div>
+      {/if}
+      {#if message.embeds.length > 0}
+        <div class="embeds">
+          {#each message.embeds as embed}
+            <Embed {embed} {guildID} />
           {/each}
         </div>
       {/if}
@@ -177,7 +185,7 @@
     margin: 0;
     margin-top: 0.1em;
     gap: 0.25em;
-    line-height: 1.25em;
+    line-height: 1.35em;
 
     &,
     * {
@@ -205,6 +213,7 @@
   .body {
     margin-right: 0.5em;
     margin-top: auto;
+    line-height: 1.35em;
     overflow: hidden;
 
     @media (max-width: $tiny-width) {
@@ -213,7 +222,6 @@
 
     p {
       margin: 0;
-      line-height: 1.25em;
       overflow: hidden;
       white-space: pre-wrap;
       word-break: break-word;
@@ -232,10 +240,6 @@
     .error {
       font-size: 0.85em;
       color: var(--color-error);
-    }
-
-    .attachments > :global(*) {
-      margin-top: 0.5em;
     }
   }
 </style>

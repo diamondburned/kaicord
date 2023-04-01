@@ -11,10 +11,10 @@
     elem: simplemarkdown.ArrayNodeOutput<HTMLElement | string>;
   };
 
-  function newDivArray(): HTMLDivElement {
-    const div = document.createElement("div");
-    div.classList.add("md-array");
-    return div;
+  function newArrayElem(): HTMLSpanElement {
+    const span = document.createElement("span");
+    span.classList.add("md-array");
+    return span;
   }
 
   function w(
@@ -35,7 +35,7 @@
   }
 
   function sv<T extends any>(component: T, props: Record<string, any>): HTMLElement {
-    const div = newDivArray();
+    const div = newArrayElem();
     new (component as any)({
       target: div,
       props,
@@ -59,10 +59,7 @@
     escape: {
       // What is this even for?
       ...discordmarkdown.rules.escape,
-      elem: (node, elem, state) => {
-        console.log("escape: rendering", node);
-        return elem(node.content, state);
-      },
+      elem: (node, elem, state) => elem(node.content, state),
     },
     autolink: {
       ...discordmarkdown.rules.autolink,
@@ -100,10 +97,7 @@
     },
     text: {
       ...discordmarkdown.rules.text,
-      elem: (node) => {
-        console.log("text: rendering", node);
-        return node.content;
-      },
+      elem: (node) => node.content,
     },
     // Emoticon is not to be confused with emoji. Emoticons are the old-school
     // emoticons like the shrug thing.
@@ -121,22 +115,20 @@
     },
     user: {
       ...discordmarkdown.rules.user,
-      elem: (node, _, state) => {
-        return sv(MentionUser, {
+      elem: (node, _, state) =>
+        sv(MentionUser, {
           state: state.state,
           guildID: state.guildID,
           userID: node.id,
-        });
-      },
+        }),
     },
     channel: {
       ...discordmarkdown.rules.channel,
-      elem: (node, _, state) => {
-        return sv(MentionChannel, {
+      elem: (node, _, state) =>
+        sv(MentionChannel, {
           state: state.state,
           channelID: node.id,
-        });
-      },
+        }),
     },
     role: {
       ...discordmarkdown.rules.role,
@@ -145,13 +137,12 @@
     },
     emoji: {
       ...discordmarkdown.rules.emoji,
-      elem: (node) => {
-        return sv(Emoji, {
+      elem: (node) =>
+        sv(Emoji, {
           id: node.id,
           name: node.name,
           animated: node.animated,
-        });
-      },
+        }),
     },
     everyone: {
       ...discordmarkdown.rules.everyone,
@@ -179,7 +170,7 @@
           return elem(array[0], state);
         }
 
-        const div = newDivArray();
+        const div = newArrayElem();
         for (const e of array) {
           div.append(elem(e, state));
         }
@@ -238,12 +229,32 @@
   bind:this={span}
 />
 
-<style lang="scss">
-  :global(div.md-array) {
+<style lang="scss" global>
+  .md-array {
     display: contents;
   }
 
-  .md-content.md-only-emoji :global(.md-emoji > .icon) {
+  .md-content {
+    a:hover {
+      border-width: 1px;
+    }
+
+    br {
+      display: block;
+      margin: 0.25em 0;
+    }
+
+    blockquote {
+      margin: 0.5em 0;
+      padding: 0.35em;
+      width: fit-content;
+      border-width: 3px;
+      border-color: #{lighten($color-bg-alt, 20%)};
+      background-color: transparent;
+    }
+  }
+
+  .md-content.md-only-emoji .md-emoji > .icon {
     --size: 2.5em;
 
     @media (max-width: $tiny-width) {

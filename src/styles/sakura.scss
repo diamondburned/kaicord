@@ -55,11 +55,21 @@ h5,
 h6,
 p {
   margin: 1.5rem 0;
+  line-height: 1.35;
 }
 
 a {
   /* Workaround for sakura.css' weird link styling. */
   border-bottom: 2px solid transparent;
+}
+
+a:hover {
+  border: none;
+  text-decoration: underline;
+}
+
+a:not([href]) {
+  color: inherit;
 }
 
 button {
