@@ -61,8 +61,8 @@
   let messages = store.writable<(RegularMessage | SendingMessage)[]>([]);
   $: messages.update(() => {
     const messages: (RegularMessage | SendingMessage)[] = [];
-    if (regularMessages) $regularMessages.forEach((m) => messages.push(m));
-    if (sendingMessages) $sendingMessages.forEach((m) => messages.push(m));
+    if (regularMessages) messages.push(...$regularMessages);
+    if (sendingMessages) messages.push(...$sendingMessages);
     // Sort latest first.
     messages.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
     return messages;
@@ -78,6 +78,11 @@
     if (!prev) return false;
     if (store.get(prev.author).id !== store.get(curr.author).id) return false;
     if (curr.timestamp.getTime() - prev.timestamp.getTime() > compactAge) return false;
+    if (!curr.sending && !prev.sending && curr.webhookID == prev.webhookID) {
+      const currUser = discord.stripUser(curr.author);
+      const prevUser = discord.stripUser(prev.author);
+      if (currUser.username != prevUser.username) return false;
+    }
     return true;
   }
 

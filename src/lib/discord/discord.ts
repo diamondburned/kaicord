@@ -43,6 +43,15 @@ export type User = {
 export type Friend = Extract<User, { guild?: undefined }>;
 export type Member = Extract<User, { guild: store.Readable<Guild> }>;
 
+// stripUser returns the User as a User object without the guild field. This is
+// useful for comparing users without caring about their guild.
+export function stripUser(u: User | store.Readable<User>): Friend {
+  if ((u as any).subscribe) {
+    u = store.get(u as any);
+  }
+  return u as Friend;
+}
+
 // ChannelDMTypes are the types of channels that are direct messages.
 export type ChannelDMTypes = ChannelType.DirectMessage | ChannelType.GroupDM;
 
@@ -108,6 +117,7 @@ export type Message = {
   content: string;
   timestamp: Date;
   editedTimestamp?: Date;
+  webhookID?: ID;
   attachments: Attachment[];
   embeds: Embed[];
   reference?:

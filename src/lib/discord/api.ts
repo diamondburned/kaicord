@@ -117,6 +117,7 @@ export type Message = {
   content: string;
   channel_id: string;
   guild_id?: string;
+  webhook_id?: string;
   author: User;
   timestamp: string;
   edited_timestamp?: string;

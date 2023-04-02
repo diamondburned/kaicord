@@ -40,13 +40,16 @@ export function convertMember(
   return {
     ...convertUser(member.user),
     guild: store.derived(state, (state) => unwrap(state.guilds.get(guildID))),
-    roles: store.derived(state, (state) => {
-      const knownRoles = unwrap(state.guilds.get(guildID)).roles;
-      const roles = member.roles
-        .map((roleID) => unwrap(knownRoles.find((known) => known.id == roleID)))
-        .filter((role) => role);
-      return roles;
-    }),
+    roles:
+      member.user.discriminator == "0000"
+        ? store.readable([] as discord.GuildRole[])
+        : store.derived(state, (state) => {
+            const knownRoles = unwrap(state.guilds.get(guildID)).roles;
+            const roles = member.roles
+              .map((roleID) => unwrap(knownRoles.find((known) => known.id == roleID)))
+              .filter((role) => role);
+            return roles;
+          }),
     nick: member.nick,
   };
 }
@@ -165,6 +168,7 @@ export function convertChannelMessage(state: StateStore, message: api.Message): 
     editedTimestamp: message.edited_timestamp
       ? convertTimestamp(message.edited_timestamp)
       : undefined,
+    webhookID: message.webhook_id,
     attachments: (message.attachments ?? []).map(convertAttachment),
     embeds: (message.embeds ?? []).map(convertEmbed),
     reference: message.referenced_message
@@ -187,13 +191,16 @@ export function convertChannelMessage(state: StateStore, message: api.Message): 
       return {
         ...v,
         guild: undefined,
-        author: store.derived(state, (state) => {
-          const user = state.friends.get(message.author.id);
-          if (user) {
-            return user;
-          }
-          return convertUser(message.author);
-        }),
+        author:
+          message.author.discriminator == "0000"
+            ? store.readable(convertUser(message.author))
+            : store.derived(state, (state) => {
+                const user = state.friends.get(message.author.id);
+                if (user) {
+                  return user;
+                }
+                return convertUser(message.author);
+              }),
       };
     }
     default: {
@@ -201,19 +208,27 @@ export function convertChannelMessage(state: StateStore, message: api.Message): 
       return {
         ...v,
         guild: store.derived(state, (state) => unwrap(state.guilds.get(message.guild_id!))),
-        author: store.derived(state, (state) => {
-          const guild = unwrap(state.guilds.get(unwrap(guildID)));
-          const member = guild.members.get(message.author.id);
-          if (member) {
-            return member;
-          }
+        author:
+          message.author.discriminator == "0000"
+            ? store.readable(
+                convertMember(state, guildID, {
+                  user: message.author,
+                  roles: [],
+                })
+              )
+            : store.derived(state, (state) => {
+                const guild = unwrap(state.guilds.get(unwrap(guildID)));
+                const member = guild.members.get(message.author.id);
+                if (member) {
+                  return member;
+                }
 
-          return {
-            ...convertUser(message.author),
-            guild: store.derived(stateStore, (state) => unwrap(state.guilds.get(guildID))),
-            roles: store.readable(undefined),
-          };
-        }),
+                return {
+                  ...convertUser(message.author),
+                  guild: store.derived(stateStore, (state) => unwrap(state.guilds.get(guildID))),
+                  roles: store.readable(undefined),
+                };
+              }),
       };
     }
   }
