@@ -4,6 +4,11 @@
   [headers.values]
     Access-Control-Allow-Origin = "*"
 
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
 [context.production]
   command = "vite build --mode production"
 
