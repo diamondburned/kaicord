@@ -289,19 +289,20 @@ export class Session {
             // valid.
             if (this.sessionData) {
               this.sessionData = null;
+              this.changeStatus("session ID invalid, retrying...");
               break;
             }
             return false;
           }
           case openState.retry: {
+            this.changeStatus("server requested a retry, retrying...");
             break;
           }
         }
       } catch (err) {
-        console.debug("gateway: cannot connect:", err);
+        this.changeStatus(`retrying, error: ${err}`);
       }
 
-      this.changeStatus("cannot connect to websocket, retrying...");
       await sleep(5000);
     }
   }
