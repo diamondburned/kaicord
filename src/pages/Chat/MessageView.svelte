@@ -13,7 +13,7 @@
   import * as store from "svelte/store";
   import * as api from "#/lib/discord/api.js";
   import * as discord from "#/lib/discord/discord.js";
-  import session from "#/lib/local.js";
+  import state from "#/lib/local.js";
   import prettyBytes from "pretty-bytes";
 
   const dispatch = svelte.createEventDispatcher<{ menu: void }>();
@@ -52,7 +52,7 @@
   let promise: Promise<store.Writable<discord.Message[]>> | null;
   $: {
     if (channel) {
-      promise = $session.messages(channel.id).then((m) => (regularMessages = m));
+      promise = state.messages(channel.id).then((m) => (regularMessages = m));
     } else {
       promise = null;
     }
@@ -118,7 +118,7 @@
       const sending: SendingMessage = {
         sending: true,
         content: this.content,
-        author: $session.self,
+        author: state.self,
         timestamp: new Date(),
       };
 
@@ -127,7 +127,7 @@
         return sendingMessages;
       });
 
-      $session.client
+      state.client
         .do<api.SendMessage>(resp)
         .then(() => {
           sendingMessages.update((sendingMessages) => {

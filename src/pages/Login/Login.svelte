@@ -7,6 +7,8 @@
   import * as local from "#/lib/local.js";
   import * as svelte from "svelte";
 
+  const status = local.state.status;
+
   let promise = Promise.resolve();
   let error = "";
   let token = "";
@@ -48,6 +50,7 @@
   {#await promise}
     <div class="loading">
       <Loading size={46} />
+      <p class="gateway-status">{$status}</p>
     </div>
   {:then}
     <main id="login" class="container">

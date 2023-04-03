@@ -16,13 +16,13 @@
     Browse = "Browse",
   }
 
-  const session = local.session;
   const trackedRecents = local.recentChannels;
-
-  let recentChannels: discord.Channel[] = [];
+  $: recentChannels = $trackedRecents
+    .map((recent) => store.get(local.state.channel(recent.id)))
+    .filter((ch) => ch !== null) as discord.Channel[];
 
   let searchInput = "";
-  let searcher = new search.ChannelSearcher($session.state);
+  let searcher = new search.ChannelSearcher(local.state.state);
 
   let current: discord.Channel | null = null;
   function onSelectEvent(event: CustomEvent<discord.Channel>) {
@@ -55,16 +55,6 @@
 
   $: searchedChannels = searcher.search(searchInput);
   $: mentionedChannels = [] as discord.Channel[]; // TODO
-  $: {
-    const s = $session;
-    if (s) {
-      recentChannels = $trackedRecents
-        .map((recent) => store.get(s.channel(recent.id)))
-        .filter((ch) => ch !== null) as discord.Channel[];
-    } else {
-      recentChannels = [];
-    }
-  }
 </script>
 
 <div class="container" class:sidebar-open={sidebarOpen}>

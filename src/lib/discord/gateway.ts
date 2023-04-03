@@ -2,16 +2,18 @@ import * as store from "svelte/store";
 import * as api from "#/lib/discord/api.js";
 import * as discord from "#/lib/discord/discord.js";
 import * as persistent from "#/lib/persistent.js";
-import { sleep } from "#/lib/promise.js";
 
-type SessionData = {
+import Worker from "#/lib/discord/gateway_worker.js?worker";
+import type * as gatewayworker from "#/lib/discord/gateway_worker_decls.js";
+
+export type SessionData = {
   token: string;
   session_id?: string;
   seq?: number;
 };
 
 // GatewayURL is the URL of the Discord gateway.
-const GatewayURL = "wss://gateway.discord.gg/?v=9&encoding=json";
+export const GatewayURL = "wss://gateway.discord.gg/?v=9&encoding=json";
 
 export type IdentifyProperties = {
   os: string;
@@ -162,229 +164,125 @@ export type Command =
 export class Session {
   public readonly event: store.Readable<Event>;
   public readonly token: store.Writable<string | null>;
+  public readonly status: store.Readable<string>;
+
+  private worker: Worker;
+  private workerSerial = 0;
+  private workerPending = new Map<
+    number,
+    {
+      resolve: (arg0: any) => void;
+      reject: (arg0: any) => void;
+    }
+  >();
 
   private _event = store.writable<Event>({ op: null });
-  private heartbeat: number = -1;
-  // TODO: move the websocket to a dedicated web worker. That'll allow us to
-  // manage the session asynchronously.
-  private ws: WebSocket | null = null;
-  private sessionData: SessionData | null = null;
+  private _status = store.writable("");
+  private session?: SessionData;
 
   constructor(
     public readonly client: api.Client,
     public readonly key = "gw_state",
     public readonly idprop = defaultIdentifyProperties()
   ) {
-    this.event = store.readonly(this._event);
     this.token = persistent.writable(`${key}_token`, null);
+    this.status = store.readonly(this._status);
+
+    this.event = store.readonly(this._event);
+    this.event.subscribe((event) => {
+      if (event.op == 0 && this.session) {
+        this.session.seq = event.s;
+        if (event.t == "READY") {
+          this.session.session_id = event.d.session_id;
+        }
+      }
+    });
+
+    this.worker = new Worker();
+    this.worker.onmessage = (
+      ev: MessageEvent<gatewayworker.Command["reply"] | gatewayworker.Event>
+    ) => {
+      if (ev.data.id) {
+        // is reply
+        const promise = this.workerPending.get(ev.data.id);
+        if (!promise) {
+          console.error("gateway: received reply for unknown id", ev.data.id);
+          return;
+        }
+
+        switch (ev.data.res) {
+          case "error":
+            promise.reject(ev.data.v);
+            break;
+          case "ok":
+            promise.resolve(ev.data.v);
+            break;
+        }
+
+        this.workerPending.delete(ev.data.id);
+        return;
+      }
+
+      // TypeScript limitation
+      if (ev.data.id == undefined) {
+        // is event
+        switch (ev.data.t) {
+          case "close": {
+            this._event.set({ op: -1, d: { close: ev.data.d } });
+            break;
+          }
+          case "event": {
+            this._event.set(ev.data.d);
+            break;
+          }
+          case "status": {
+            this._status.set(ev.data.d);
+            break;
+          }
+        }
+      }
+    };
   }
 
   async send(command: Command) {
-    if (!this.ws) {
-      throw new Error("websocket not opened");
-    }
-
-    if (this.ws.readyState != WebSocket.OPEN) {
-      throw new Error(`websocket not ready, state ${this.ws.readyState}`);
-    }
-
-    console.debug("gateway: sending", command);
-    this.ws.send(JSON.stringify(command));
+    await this.workerDo<gatewayworker.SendCommand>("send", command);
   }
 
   // open opens the Discord gateway. False is returned if a token is needed.
   // True is returned if the session has been successfully opened. At this
   // point, .token will return a valid token.
   async open(token?: string): Promise<boolean> {
-    enum openState {
-      success,
-      failure,
-      retry,
+    if (!this.session) {
+      if (!token) {
+        token = store.get(this.token) ?? undefined;
+      }
+      if (!token) {
+        console.debug("gateway: no token saved, returning false");
+        return false;
+      }
+      this.session = {
+        token,
+      };
     }
 
-    while (true) {
-      console.debug("gateway: trying to open session...");
-
-      try {
-        await this.init();
-        console.debug("gateway: websocket connected, hello received");
-
-        const done = this.waitForEvent((ev) => {
-          switch (ev.op) {
-            case 0: {
-              switch (ev.t) {
-                case "READY":
-                  this.sessionData = {
-                    token: token!,
-                    session_id: ev.d.session_id,
-                    seq: ev.s,
-                  };
-                  return openState.success;
-                case "RESUMED":
-                  return openState.success;
-              }
-              break;
-            }
-            case 9: {
-              // invalid session
-              return ev.d ? openState.retry : openState.failure;
-            }
-            case -1: {
-              // unexpected close, retry
-              throw errorEvent(ev);
-            }
-          }
-
-          return false;
-        });
-
-        if (this.sessionData) {
-          console.debug("gateway: we have old data, sending resume command");
-          await this.send({
-            op: 6,
-            d: this.sessionData,
-          });
-        } else {
-          if (!token) {
-            let savedToken = store.get(this.token);
-            if (savedToken) {
-              token = savedToken;
-            } else {
-              console.debug("gateway: no token saved, returning false");
-              return false;
-            }
-          }
-
-          console.debug("gateway: no old data, sending new identify command");
-          await this.send({
-            op: 2,
-            d: {
-              token,
-              properties: this.idprop,
-              // https://github.com/diamondburned/ningen/blob/d39554fd5d6743a5e3604753150cc7cb8d8c4660/ningen.go#L101
-              capabilities: 253,
-            },
-          });
-        }
-
-        switch (await done) {
-          case openState.success: {
-            console.debug("gateway: session opened successfully");
-            this.token.set(token!);
-            this.client.token = token!; // take over the client
-            return true;
-          }
-          case openState.failure: {
-            // The session ID might be invalid, but maybe the token is still
-            // valid.
-            if (this.sessionData) {
-              this.sessionData = null;
-              break;
-            }
-            return false;
-          }
-          case openState.retry: {
-            break;
-          }
-        }
-      } catch (err) {
-        console.debug("gateway: cannot connect:", err);
-      }
-
-      console.debug("gateway: cannot connect to websocket, retrying...");
-      await sleep(5000);
-    }
-  }
-
-  private init(): Promise<void> {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
-
-    this.ws = this.client.client.websocket(GatewayURL);
-
-    this.ws.addEventListener("message", (msg) => {
-      const ev = JSON.parse(msg.data) as Event;
-      if (ev.op === undefined) {
-        console.debug("websocket received unknown event", ev);
-        return;
-      }
-
-      switch (ev.op) {
-        case 0: {
-          if (this.sessionData) {
-            this.sessionData.seq = ev.s;
-          }
-          break;
-        }
-        case 10: {
-          if (this.heartbeat != -1) {
-            clearInterval(this.heartbeat);
-            this.heartbeat = 0;
-          }
-          this.heartbeat = window.setInterval(
-            () =>
-              this.send({ op: 1, d: null }).catch(() => {
-                clearInterval(this.heartbeat);
-                this.heartbeat = 0;
-              }),
-            ev.d.heartbeat_interval
-          );
-          break;
-        }
-      }
-
-      this._event.set(ev);
-      console.debug("websocket received event", ev);
-    });
-
-    this.ws.addEventListener("error", (ev) => {
-      console.error("websocket error:", ev);
-      this._event.set({ op: -1, d: { error: ev } });
-    });
-
-    this.ws.addEventListener("close", (ev) => {
-      console.debug("websocket closed:", ev);
-      this.ws = null;
-      this._event.set({ op: -1, d: { close: ev } });
-    });
-
-    return this.waitForEvent((ev: Event) => {
-      switch (ev.op) {
-        case 10:
-          return;
-        case -1:
-          throw errorEvent(ev);
-        default:
-          return false;
-      }
+    return await this.workerDo<gatewayworker.ConnectCommand>("connect", {
+      session: this.session,
+      idprop: this.idprop,
     });
   }
 
-  private waitForEvent<T>(f: (ev: Event) => T | false): Promise<T> {
-    return new Promise((resolve, reject) => {
-      let done: T | false | { __rejected: true } = false;
-
-      let unsub: store.Unsubscriber | undefined;
-      unsub = this._event.subscribe((ev) => {
-        if (done === false) {
-          try {
-            done = f(ev);
-            if (done !== false) {
-              resolve(done);
-            }
-          } catch (err) {
-            // need any sentinel that is uncommon
-            done = { __rejected: true };
-            reject(err);
-          }
-        }
-
-        if (done !== false && unsub) {
-          unsub();
-        }
-      });
+  private async workerDo<T extends gatewayworker.Command>(
+    t: T["command"]["t"],
+    d: T["command"]["d"]
+  ): Promise<Extract<T["reply"], { res: "ok" }>["v"]> {
+    return await new Promise((ok, error) => {
+      const sendingCommand = {
+        id: this.workerSerial++,
+        t,
+        d,
+      };
+      this.workerPending.set(sendingCommand.id, { resolve: ok, reject: error });
+      this.worker.postMessage(sendingCommand);
     });
   }
 }

@@ -72,7 +72,6 @@ export default defineConfig((env) => {
       },
     },
     build: {
-      target: ["firefox57"],
       outDir: "../dist",
       emptyOutDir: true,
     },
