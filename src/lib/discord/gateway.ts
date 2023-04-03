@@ -162,6 +162,7 @@ export type Command =
 export class Session {
   public readonly event: store.Readable<Event>;
   public readonly token: store.Writable<string | null>;
+  public readonly status = store.writable("");
 
   private _event = store.writable<Event>({ op: null });
   private heartbeat: number = -1;
@@ -202,12 +203,18 @@ export class Session {
       retry,
     }
 
+    // Have an overall timeout of 30s.
+    const timeout = new Promise<void>(async (ok, error) => {
+      await sleep(60000);
+      error(new Error("timeout connecting to gateway"));
+    });
+
     while (true) {
-      console.debug("gateway: trying to open session...");
+      this.changeStatus("connecting to gateway...");
 
       try {
-        await this.init();
-        console.debug("gateway: websocket connected, hello received");
+        await Promise.race([this.init(), timeout]);
+        this.changeStatus("websocket connected, hello received");
 
         const done = this.waitForEvent((ev) => {
           switch (ev.op) {
@@ -267,7 +274,10 @@ export class Session {
           });
         }
 
-        switch (await done) {
+        this.changeStatus("waiting for ready/resumed event");
+        const result = await Promise.race([done, timeout]);
+
+        switch (result) {
           case openState.success: {
             console.debug("gateway: session opened successfully");
             this.token.set(token!);
@@ -291,7 +301,7 @@ export class Session {
         console.debug("gateway: cannot connect:", err);
       }
 
-      console.debug("gateway: cannot connect to websocket, retrying...");
+      this.changeStatus("cannot connect to websocket, retrying...");
       await sleep(5000);
     }
   }
@@ -386,5 +396,10 @@ export class Session {
         }
       });
     });
+  }
+
+  private changeStatus(v: string) {
+    console.debug(`gateway_worker: status: ${v}`);
+    this.status.set(v);
   }
 }
