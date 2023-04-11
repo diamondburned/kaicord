@@ -11,6 +11,14 @@ Kaicord is currently a work-in-progress. Many essential features will be
 missing. Kaicord will also try to be distraction-free and minimal, and so it
 won't have many of the features that Discord has.
 
+## Building
+
+Built output goes to `./dist`.
+
+```sh
+npm run build
+```
+
 ## Credits
 
 Some of the code were taken from
